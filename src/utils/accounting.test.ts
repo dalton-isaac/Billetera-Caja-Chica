@@ -4,6 +4,7 @@ import {
   calcularSaldosBolsillos,
   calcularDiagnosticoArqueo,
   CONFIG_DEFAULT,
+  TARIFAS_TRANSPORTE,
 } from './accounting';
 import type {
   Movimiento,
@@ -17,6 +18,16 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       expect(CONFIG_DEFAULT.costoTransferenciaSPI).toBe(0.20);
       expect(CONFIG_DEFAULT.porcentajeIVADigital).toBe(15);
       expect(CONFIG_DEFAULT.vibracionTactil).toBe(true);
+    });
+  });
+
+  describe('TARIFAS_TRANSPORTE', () => {
+    it('debe exportar las tarifas oficiales de transporte en Quito', () => {
+      expect(TARIFAS_TRANSPORTE.METRO).toBe(0.45);
+      expect(TARIFAS_TRANSPORTE.BUS_URBANO).toBe(0.35);
+      expect(TARIFAS_TRANSPORTE.BUS_VALLES_MIN).toBe(0.45);
+      expect(TARIFAS_TRANSPORTE.BUS_VALLES_MED).toBe(0.55);
+      expect(TARIFAS_TRANSPORTE.BUS_VALLES_MAX).toBe(0.75);
     });
   });
 
@@ -461,6 +472,36 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       expect(diag.pistas).not.toContain('Posible pasaje de bus urbano olvidado ($0.35)');
       expect(diag.pistas).not.toContain('Posible pasaje de Metro de Quito olvidado ($0.45)');
       expect(diag.pistas).not.toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
+    });
+
+    it('no debe sugerir comisión SPI ante descuadres de dólares enteros en banco (-$10.00 y -$5.00)', () => {
+      const diag10 = calcularDiagnosticoArqueo(140.00, 45.00, 150.00, 45.00);
+      expect(diag10.diffBanco).toBe(-10.00);
+      expect(diag10.pistas).not.toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
+
+      const diag5 = calcularDiagnosticoArqueo(145.00, 45.00, 150.00, 45.00);
+      expect(diag5.diffBanco).toBe(-5.00);
+      expect(diag5.pistas).not.toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
+    });
+
+    it('no debe sugerir pasaje de bus ante descuadres de 1¢ o 2¢ en efectivo (-$0.01 y -$0.02)', () => {
+      const diag1c = calcularDiagnosticoArqueo(150.00, 44.99, 150.00, 45.00);
+      expect(diag1c.diffEfectivo).toBe(-0.01);
+      expect(diag1c.pistas).not.toContain('Posible pasaje de bus urbano olvidado ($0.35)');
+
+      const diag2c = calcularDiagnosticoArqueo(150.00, 44.98, 150.00, 45.00);
+      expect(diag2c.diffEfectivo).toBe(-0.02);
+      expect(diag2c.pistas).not.toContain('Posible pasaje de bus urbano olvidado ($0.35)');
+    });
+
+    it('debe sugerir comisión SPI ante descuadres de -$0.20 y -$0.40 en banco', () => {
+      const diag20 = calcularDiagnosticoArqueo(149.80, 45.00, 150.00, 45.00);
+      expect(diag20.diffBanco).toBe(-0.20);
+      expect(diag20.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
+
+      const diag40 = calcularDiagnosticoArqueo(149.60, 45.00, 150.00, 45.00);
+      expect(diag40.diffBanco).toBe(-0.40);
+      expect(diag40.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
     });
   });
 });

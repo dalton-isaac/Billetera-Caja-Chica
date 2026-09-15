@@ -16,6 +16,14 @@ export const CONFIG_DEFAULT: ConfiguracionSistema = {
   vibracionTactil: true,
 };
 
+export const TARIFAS_TRANSPORTE = {
+  METRO: 0.45,
+  BUS_URBANO: 0.35,
+  BUS_VALLES_MIN: 0.45,
+  BUS_VALLES_MED: 0.55,
+  BUS_VALLES_MAX: 0.75,
+} as const;
+
 /**
  * Redondea un valor numérico a 2 decimales según el estándar del sistema.
  */
@@ -169,10 +177,10 @@ export function calcularDiagnosticoArqueo(
   const cuadrado = Math.abs(diffBanco) === 0 && Math.abs(diffEfectivo) === 0;
   const pistas: string[] = [];
 
-  // Diagnóstico bancario (ej. comisión SPI no anotada)
+  // Diagnóstico bancario (ej. comisión SPI no anotada, hasta 3 transferencias)
   if (diffBanco < -0.001) {
     const centsBanco = Math.round(Math.abs(diffBanco) * 100);
-    if (centsBanco === 20 || centsBanco % 20 === 0) {
+    if (centsBanco <= 60 && centsBanco % 20 === 0) {
       pistas.push('Posible comisión SPI de Produbanco no anotada ($0.20)');
     }
   }
@@ -186,10 +194,7 @@ export function calcularDiagnosticoArqueo(
     } else {
       const remainder = centsEfectivo % 35;
       const isMultipleOrClose =
-        remainder === 0 ||
-        remainder <= 2 ||
-        remainder >= 33 ||
-        Math.abs(centsEfectivo - 35) <= 2;
+        centsEfectivo >= 33 && (remainder === 0 || remainder <= 2 || remainder >= 33);
 
       if (isMultipleOrClose) {
         pistas.push('Posible pasaje de bus urbano olvidado ($0.35)');
