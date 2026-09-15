@@ -12,15 +12,22 @@ import { calcularDesgloseGasto, calcularSaldosBolsillos, CONFIG_DEFAULT } from '
 import { BalanceCards } from './components/BalanceCards';
 import { PaymentSelector } from './components/PaymentSelector';
 import { QuickActionGrid } from './components/QuickActionGrid';
+import { AutoReimburseModal } from './components/AutoReimburseModal';
 import { vibrarExito } from './utils/vibration';
 
 export default function App() {
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('DEBITO_PRODUBANCO');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isAutoReimburseOpen, setIsAutoReimburseOpen] = useState<boolean>(false);
 
   // Consulta reactiva en vivo con Dexie
   const movimientos = useLiveQuery(() => db.movimientos.toArray()) ?? [];
-  const config = useLiveQuery(() => obtenerConfiguracion()) ?? CONFIG_DEFAULT;
+  const configEntity = useLiveQuery(() => db.configuracion.get('default'));
+  const config = configEntity ?? CONFIG_DEFAULT;
+
+  useEffect(() => {
+    obtenerConfiguracion();
+  }, []);
 
   // Cálculo en tiempo real de saldos de los 3 bolsillos
   const saldos = calcularSaldosBolsillos(movimientos, config.baseMensual);
@@ -93,7 +100,35 @@ export default function App() {
   };
 
   const handleCobrarReembolso = () => {
-    setToastMessage(`⚡ Reembolso pendiente: $${saldos.saldoPendienteReembolso.toFixed(2)}`);
+    setIsAutoReimburseOpen(true);
+  };
+
+  const handleConfirmarReembolso = async (
+    montoReembolso: number,
+    comisionSPI: number,
+    nota?: string,
+  ) => {
+    try {
+      await registrarMovimiento({
+        tipo: 'AUTO_REEMBOLSO',
+        categoria: 'OTROS',
+        metodoPago: 'DEBITO_PRODUBANCO',
+        montoBase: montoReembolso,
+        comisionBancaria: comisionSPI,
+        impuestoDigitalIVA: 0,
+        montoTotalDebitado: montoReembolso + comisionSPI,
+        estadoReembolso: 'REEMBOLSADO',
+        nota: nota || 'Auto-reembolso de caja chica a cuenta personal Banco Pichincha',
+      });
+
+      vibrarExito();
+      setToastMessage(`⚡ Reembolso registrado: +$${montoReembolso.toFixed(2)} liquidado`);
+      setIsAutoReimburseOpen(false);
+    } catch (error) {
+      console.error('Error registrando auto-reembolso:', error);
+      setToastMessage('❌ Error al guardar el auto-reembolso');
+      throw error;
+    }
   };
 
   return (
@@ -149,6 +184,15 @@ export default function App() {
           config={config}
         />
       </main>
+
+      {/* Modal de Auto-Reembolso y Liquidación */}
+      <AutoReimburseModal
+        isOpen={isAutoReimburseOpen}
+        onClose={() => setIsAutoReimburseOpen(false)}
+        saldoPendiente={saldos.saldoPendienteReembolso}
+        costoTransferenciaSPI={config.costoTransferenciaSPI}
+        onConfirmarReembolso={handleConfirmarReembolso}
+      />
     </div>
   );
 }
