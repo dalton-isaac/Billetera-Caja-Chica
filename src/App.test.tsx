@@ -54,4 +54,33 @@ describe('App', () => {
       expect(autoReembolso?.metodoPago).toBe('DEBITO_PRODUBANCO');
     });
   });
+
+  it('opens ArqueoModal when Arqueo de Caja button is clicked and saves audit record', async () => {
+    render(<App />);
+
+    const arqueoBtn = screen.getByRole('button', { name: /Arqueo de Caja/i });
+    fireEvent.click(arqueoBtn);
+
+    // Modal should open
+    await waitFor(() => {
+      expect(screen.getByText('¿Me cuadra la caja?')).toBeInTheDocument();
+      expect(screen.getByText('¡Tu caja está 100% cuadrada!')).toBeInTheDocument();
+    });
+
+    // Save audit
+    const saveBtn = screen.getByRole('button', { name: /Guardar Acta de Arqueo/i });
+    fireEvent.click(saveBtn);
+
+    // Verify persisted in db.arqueos
+    await waitFor(async () => {
+      const arqueos = await db.arqueos.toArray();
+      expect(arqueos.length).toBe(1);
+      expect(arqueos[0].estado).toBe('CUADRADO');
+      expect(arqueos[0].saldoTeoricoBanco).toBe(200.00);
+      expect(arqueos[0].saldoRealBanco).toBe(200.00);
+    });
+
+    // Verify toast
+    expect(screen.getByText(/¡Acta guardada! Tu caja está 100% cuadrada/i)).toBeInTheDocument();
+  });
 });

@@ -1,24 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Wallet, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Wallet, ShieldCheck, CheckCircle2, Scale } from 'lucide-react';
 import type {
   CategoriaGasto,
   MetodoPago,
+  RegistroArqueo,
   SubcategoriaOtro,
   TipoMovimiento,
 } from './types';
-import { db, obtenerConfiguracion, registrarMovimiento } from './db/db';
+import { db, obtenerConfiguracion, registrarMovimiento, registrarArqueo } from './db/db';
 import { calcularDesgloseGasto, calcularSaldosBolsillos, CONFIG_DEFAULT } from './utils/accounting';
 import { BalanceCards } from './components/BalanceCards';
 import { PaymentSelector } from './components/PaymentSelector';
 import { QuickActionGrid } from './components/QuickActionGrid';
 import { AutoReimburseModal } from './components/AutoReimburseModal';
+import { ArqueoModal } from './components/ArqueoModal';
 import { vibrarExito } from './utils/vibration';
 
 export default function App() {
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('DEBITO_PRODUBANCO');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAutoReimburseOpen, setIsAutoReimburseOpen] = useState<boolean>(false);
+  const [isArqueoOpen, setIsArqueoOpen] = useState<boolean>(false);
 
   // Consulta reactiva en vivo con Dexie
   const movimientos = useLiveQuery(() => db.movimientos.toArray()) ?? [];
@@ -131,6 +134,24 @@ export default function App() {
     }
   };
 
+  const handleGuardarArqueo = async (
+    registro: Omit<RegistroArqueo, 'id' | 'fechaHora'>,
+  ) => {
+    try {
+      await registrarArqueo(registro);
+      vibrarExito();
+      if (registro.estado === 'CUADRADO') {
+        setToastMessage('⚖️ ¡Acta guardada! Tu caja está 100% cuadrada');
+      } else {
+        setToastMessage('⚠️ Acta guardada: Descuadre registrado para auditoría');
+      }
+    } catch (error) {
+      console.error('Error guardando arqueo:', error);
+      setToastMessage('❌ Error al guardar el arqueo en el dispositivo');
+      throw error;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-925 text-slate-100 flex flex-col items-center p-3 sm:p-5">
       {/* Toast Feedback Notification */}
@@ -163,9 +184,19 @@ export default function App() {
             <p className="text-[11px] text-slate-400">Mensajería y Transporte · Quito</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-850 rounded-full border border-slate-750 text-xs text-emerald-400 shadow-sm">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span className="font-semibold text-[11px]">Offline</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsArqueoOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-750 active:scale-95 border border-slate-700 hover:border-emerald-500/40 text-emerald-400 rounded-xl text-xs font-bold transition-all shadow-sm"
+          >
+            <Scale className="w-3.5 h-3.5" />
+            <span>Arqueo de Caja</span>
+          </button>
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-slate-850 rounded-full border border-slate-750 text-xs text-emerald-400 shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="font-semibold text-[11px]">Offline</span>
+          </div>
         </div>
       </header>
 
@@ -192,6 +223,15 @@ export default function App() {
         saldoPendiente={saldos.saldoPendienteReembolso}
         costoTransferenciaSPI={config.costoTransferenciaSPI}
         onConfirmarReembolso={handleConfirmarReembolso}
+      />
+
+      {/* Modal de Arqueo y Diagnóstico Predictivo */}
+      <ArqueoModal
+        isOpen={isArqueoOpen}
+        onClose={() => setIsArqueoOpen(false)}
+        saldoTeoricoBanco={saldos.saldoProdubanco}
+        saldoTeoricoEfectivo={saldos.saldoEfectivo}
+        onGuardarArqueo={handleGuardarArqueo}
       />
     </div>
   );
