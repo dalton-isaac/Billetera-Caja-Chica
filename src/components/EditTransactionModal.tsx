@@ -133,7 +133,7 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
     comisionBancaria = desglose.comisionBancaria;
     impuestoDigitalIVA = desglose.impuestoDigitalIVA;
     montoTotalDebitado = desglose.montoTotalDebitado;
-    estadoReembolso = desglose.estadoReembolso;
+    estadoReembolso = movimiento.estadoReembolso === 'REEMBOLSADO' ? 'REEMBOLSADO' : desglose.estadoReembolso;
   }
 
   const handleGuardar = async () => {
@@ -436,7 +436,7 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
           <button
             type="button"
             onClick={handleGuardar}
-            disabled={isSaving}
+            disabled={isSaving || isCompressing}
             className="col-span-2 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:pointer-events-none active:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-950/50 transition-transform active:scale-[0.98]"
           >
             {isSaving ? (

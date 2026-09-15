@@ -243,4 +243,37 @@ describe('EditTransactionModal', () => {
       );
     });
   });
+
+  it('preserves REEMBOLSADO status if editing an already reimbursed movement', async () => {
+    const onGuardarMock = vi.fn().mockResolvedValue(undefined);
+    const movReembolsado: Movimiento = {
+      ...mockMovimientoOtro,
+      metodoPago: 'DEUNA_PERSONAL',
+      estadoReembolso: 'REEMBOLSADO',
+    };
+
+    render(
+      <EditTransactionModal
+        isOpen={true}
+        movimiento={movReembolsado}
+        onClose={vi.fn()}
+        onGuardar={onGuardarMock}
+      />
+    );
+
+    const notaInput = screen.getByLabelText('Nota / Motivo');
+    fireEvent.change(notaInput, { target: { value: 'Pago de parqueadero saldado' } });
+
+    const saveBtn = screen.getByRole('button', { name: /Guardar Cambios/i });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(onGuardarMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          estadoReembolso: 'REEMBOLSADO',
+          nota: 'Pago de parqueadero saldado',
+        })
+      );
+    });
+  });
 });

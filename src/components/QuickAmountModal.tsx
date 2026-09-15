@@ -419,7 +419,7 @@ export const QuickAmountModal: FC<QuickAmountModalProps> = ({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={numericAmount <= 0}
+            disabled={numericAmount <= 0 || isCompressing}
             className="col-span-3 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:pointer-events-none active:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition-transform active:scale-[0.98]"
           >
             <Check className="w-4 h-4 stroke-[3]" />
