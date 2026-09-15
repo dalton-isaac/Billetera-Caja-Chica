@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Receipt,
   X,
+  Camera,
 } from 'lucide-react';
 import type {
   CategoriaGasto,
@@ -168,6 +169,7 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
   const [busqueda, setBusqueda] = useState<string>('');
   const [movimientoAEliminar, setMovimientoAEliminar] = useState<Movimiento | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [fotoModalUrl, setFotoModalUrl] = useState<string | null>(null);
 
   // Orden cronológico: más reciente primero
   const movimientosOrdenados = useMemo(() => {
@@ -389,6 +391,34 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
                   </div>
                 )}
 
+                {/* Comprobante / Factura adjunta */}
+                {m.comprobanteUrl && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        vibrarExito();
+                        setFotoModalUrl(m.comprobanteUrl!);
+                      }}
+                      aria-label="Ver comprobante adjunto"
+                      className="group flex items-center gap-2 p-1.5 rounded-xl bg-slate-900/90 border border-slate-750 hover:border-emerald-500/60 transition-all cursor-pointer"
+                    >
+                      <img
+                        src={m.comprobanteUrl}
+                        alt="Comprobante"
+                        className="w-10 h-10 object-cover rounded-lg border border-slate-700 group-hover:scale-105 transition-transform bg-slate-950"
+                      />
+                      <div className="flex flex-col text-left">
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-emerald-300 flex items-center gap-1">
+                          <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Ver Recibo / Factura</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">Toca para ampliar foto</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 {/* Badges y Desglose Financiero */}
                 <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-slate-800 text-[11px]">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -494,6 +524,51 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
                 {isDeleting ? 'Eliminando...' : 'Sí, Eliminar'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Vista Previa de Comprobante en Tamaño Completo */}
+      {fotoModalUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-150"
+          onClick={() => setFotoModalUrl(null)}
+          data-testid="receipt-modal-backdrop"
+        >
+          <div
+            className="relative max-w-lg w-full flex flex-col items-center gap-3 bg-slate-900 border border-slate-750 rounded-3xl p-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-2 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <Camera className="w-4 h-4 text-emerald-400" />
+                <span>Foto de Recibo / Factura</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFotoModalUrl(null)}
+                aria-label="Cerrar foto de comprobante"
+                className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="w-full flex items-center justify-center bg-slate-950 rounded-2xl p-2 max-h-[75vh] overflow-hidden border border-slate-800">
+              <img
+                src={fotoModalUrl}
+                alt="Comprobante completo"
+                className="max-w-full max-h-[70vh] object-contain rounded-xl"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setFotoModalUrl(null)}
+              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-white font-bold text-xs transition-colors"
+            >
+              Cerrar Vista Previa
+            </button>
           </div>
         </div>
       )}

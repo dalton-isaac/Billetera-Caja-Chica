@@ -267,4 +267,45 @@ describe('TransactionHistory', () => {
       expect(screen.queryByText('¿Eliminar movimiento?')).not.toBeInTheDocument();
     });
   });
+
+  it('renders receipt thumbnail and opens full photo modal when clicked', () => {
+    const movimientosConFoto: Movimiento[] = [
+      {
+        ...mockMovimientos[0],
+        id: 'mov-con-foto',
+        comprobanteUrl: 'data:image/webp;base64,mock-receipt-data',
+      },
+    ];
+
+    render(
+      <TransactionHistory
+        movimientos={movimientosConFoto}
+        onEditarMovimiento={vi.fn()}
+        onEliminarMovimiento={vi.fn()}
+      />
+    );
+
+    // Thumbnail button should be visible
+    const thumbnailBtn = screen.getByRole('button', { name: /Ver comprobante adjunto/i });
+    expect(thumbnailBtn).toBeInTheDocument();
+    expect(screen.getByText('Ver Recibo / Factura')).toBeInTheDocument();
+
+    // Modal should not be open yet
+    expect(screen.queryByText('Foto de Recibo / Factura')).not.toBeInTheDocument();
+
+    // Click thumbnail
+    fireEvent.click(thumbnailBtn);
+
+    // Full photo modal is opened
+    expect(screen.getByText('Foto de Recibo / Factura')).toBeInTheDocument();
+    expect(screen.getByAltText('Comprobante completo')).toHaveAttribute(
+      'src',
+      'data:image/webp;base64,mock-receipt-data'
+    );
+
+    // Close modal via button
+    const closeBtn = screen.getByRole('button', { name: /Cerrar Vista Previa/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByText('Foto de Recibo / Factura')).not.toBeInTheDocument();
+  });
 });

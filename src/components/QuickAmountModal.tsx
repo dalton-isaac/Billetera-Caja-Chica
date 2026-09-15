@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from 'react';
-import { X, Delete, Check, Car, Utensils, Package, Banknote } from 'lucide-react';
+import { X, Delete, Check, Car, Utensils, Package, Banknote, Camera, Loader2 } from 'lucide-react';
 import type {
   CategoriaGasto,
   ConfiguracionSistema,
@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { calcularDesgloseGasto, CONFIG_DEFAULT } from '../utils/accounting';
 import { vibrarExito } from '../utils/vibration';
+import { validarEsImagen, comprimirImagen } from '../utils/imageCompression';
 
 interface QuickAmountModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface QuickAmountModalProps {
     subcategoriaOtro?: SubcategoriaOtro;
     nota?: string;
     tipo?: TipoMovimiento;
+    comprobanteUrl?: string;
   }) => void;
   config?: ConfiguracionSistema;
 }
@@ -46,12 +48,18 @@ export const QuickAmountModal: FC<QuickAmountModalProps> = ({
   const [amountStr, setAmountStr] = useState<string>('');
   const [subcategoria, setSubcategoria] = useState<SubcategoriaOtro>('VARIOS');
   const [nota, setNota] = useState<string>('');
+  const [comprobanteUrl, setComprobanteUrl] = useState<string | undefined>(undefined);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setAmountStr('');
       setSubcategoria('VARIOS');
       setNota('');
+      setComprobanteUrl(undefined);
+      setIsCompressing(false);
+      setFileError(null);
     }
   }, [isOpen]);
 
@@ -99,16 +107,51 @@ export const QuickAmountModal: FC<QuickAmountModalProps> = ({
     setAmountStr(val.toFixed(2));
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!validarEsImagen(file)) {
+      setFileError('El archivo seleccionado no es una imagen válida.');
+      return;
+    }
+
+    try {
+      setIsCompressing(true);
+      setFileError(null);
+      const base64 = await comprimirImagen(file);
+      setComprobanteUrl(base64);
+      vibrarExito();
+    } catch (err) {
+      console.error('Error comprimiendo imagen:', err);
+      setFileError('No se pudo procesar la foto seleccionada.');
+    } finally {
+      setIsCompressing(false);
+      e.target.value = '';
+    }
+  };
+
   const handleConfirm = () => {
     if (numericAmount <= 0) return;
     vibrarExito();
-    onConfirm({
+    const payload: {
+      categoria: CategoriaGasto;
+      montoBase: number;
+      subcategoriaOtro?: SubcategoriaOtro;
+      nota?: string;
+      tipo?: TipoMovimiento;
+      comprobanteUrl?: string;
+    } = {
       categoria,
       montoBase: numericAmount,
       subcategoriaOtro: categoria === 'OTROS' ? subcategoria : undefined,
       nota: nota.trim() || undefined,
       tipo: isRetiro ? 'RETIRO_CAJERO' : 'GASTO',
-    });
+    };
+    if (comprobanteUrl) {
+      payload.comprobanteUrl = comprobanteUrl;
+    }
+    onConfirm(payload);
     onClose();
   };
 
@@ -263,6 +306,69 @@ export const QuickAmountModal: FC<QuickAmountModalProps> = ({
             placeholder="Nota o motivo opcional (ej. Envío a cliente)..."
             className="w-full px-3 py-2 text-xs bg-slate-800/80 rounded-xl border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
           />
+        </div>
+
+        {/* Adjuntar Recibo / Factura */}
+        <div className="flex flex-col gap-1.5">
+          {comprobanteUrl ? (
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-800/90 border border-slate-750">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={comprobanteUrl}
+                  alt="Recibo adjunto"
+                  className="w-10 h-10 object-cover rounded-lg border border-slate-600 bg-slate-950"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-white">Recibo / Factura</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">Foto optimizada lista</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setComprobanteUrl(undefined)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg bg-slate-750 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-650 hover:border-rose-800/60 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>✕ Quitar foto</span>
+              </button>
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="quick-photo-input"
+                className={`flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl border border-dashed text-xs font-bold cursor-pointer transition-colors ${
+                  isCompressing
+                    ? 'bg-slate-800/50 border-slate-700 text-slate-400 pointer-events-none'
+                    : 'bg-slate-800/60 hover:bg-slate-800 border-slate-700 hover:border-emerald-500/60 text-slate-300 hover:text-emerald-300'
+                }`}
+              >
+                {isCompressing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                    <span>Optimizando foto de factura...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 text-emerald-400" />
+                    <span>📷 Adjuntar Recibo / Factura</span>
+                  </>
+                )}
+              </label>
+              <input
+                id="quick-photo-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                disabled={isCompressing}
+                className="hidden"
+                data-testid="quick-photo-input"
+              />
+            </div>
+          )}
+          {fileError && (
+            <span className="text-[11px] text-rose-400 px-1 font-medium">{fileError}</span>
+          )}
         </div>
 
         {/* Giant Ergonomic Touch Keypad */}

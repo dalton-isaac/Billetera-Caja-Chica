@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="walletGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="claspGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#10b981" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded canvas -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="504" height="504" x="4" y="4" rx="108" stroke="#1e293b" stroke-width="4" />
+
+  <!-- Wallet Body -->
+  <g filter="url(#glow)">
+    <!-- Main Pocket -->
+    <rect x="96" y="144" width="320" height="232" rx="32" fill="url(#walletGrad)" />
+    <!-- Flap Overlay -->
+    <path d="M 96 176 C 96 158 110 144 128 144 L 384 144 C 402 144 416 158 416 176 L 416 224 C 416 236 406 246 394 246 L 118 246 C 106 246 96 236 96 224 Z" fill="#34d399" fill-opacity="0.25" />
+    <line x1="96" y1="246" x2="416" y2="246" stroke="#065f46" stroke-width="3" stroke-dasharray="6 4" />
+
+    <!-- Clasp / Lock -->
+    <rect x="336" y="222" width="76" height="56" rx="16" fill="url(#claspGrad)" stroke="#b45309" stroke-width="3" />
+    <circle cx="374" cy="250" r="8" fill="#ffffff" />
+  </g>
+
+  <!-- Cash Symbol / Emblem on the left -->
+  <circle cx="216" cy="300" r="38" fill="#065f46" fill-opacity="0.4" />
+  <text x="216" y="316" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle">$</text>
+</svg>

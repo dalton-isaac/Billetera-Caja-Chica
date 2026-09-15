@@ -29,6 +29,7 @@ interface QuickActionGridProps {
     subcategoriaOtro?: SubcategoriaOtro;
     nota?: string;
     tipo?: TipoMovimiento;
+    comprobanteUrl?: string;
   }) => Promise<void> | void;
   config?: ConfiguracionSistema;
 }

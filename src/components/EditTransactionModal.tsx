@@ -1,5 +1,5 @@
 import { useState, useEffect, type FC } from 'react';
-import { X, Save, AlertCircle, Loader2, Edit3, CreditCard, Banknote, Smartphone, UserCheck } from 'lucide-react';
+import { X, Save, AlertCircle, Loader2, Edit3, CreditCard, Banknote, Smartphone, UserCheck, Camera } from 'lucide-react';
 import type {
   CategoriaGasto,
   ConfiguracionSistema,
@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { calcularDesgloseGasto, roundToTwo, CONFIG_DEFAULT } from '../utils/accounting';
 import { vibrarExito } from '../utils/vibration';
+import { validarEsImagen, comprimirImagen } from '../utils/imageCompression';
 
 export interface EditTransactionModalProps {
   isOpen: boolean;
@@ -60,6 +61,9 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
   const [categoria, setCategoria] = useState<CategoriaGasto>('OTROS');
   const [subcategoriaOtro, setSubcategoriaOtro] = useState<SubcategoriaOtro>('VARIOS');
   const [nota, setNota] = useState<string>('');
+  const [comprobanteUrl, setComprobanteUrl] = useState<string | undefined>(undefined);
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -70,6 +74,9 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
       setCategoria(movimiento.categoria || 'OTROS');
       setSubcategoriaOtro(movimiento.subcategoriaOtro || 'VARIOS');
       setNota(movimiento.nota || '');
+      setComprobanteUrl(movimiento.comprobanteUrl || undefined);
+      setIsCompressing(false);
+      setFileError(null);
       setIsSaving(false);
       setErrorMsg(null);
     }
@@ -80,6 +87,30 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
   const numericAmount = roundToTwo(parseFloat(montoBaseStr) || 0);
   const isRetiro = movimiento.tipo === 'RETIRO_CAJERO' || categoria === 'RETIRO_CAJERO';
   const isReembolso = movimiento.tipo === 'AUTO_REEMBOLSO';
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!validarEsImagen(file)) {
+      setFileError('El archivo seleccionado no es una imagen válida.');
+      return;
+    }
+
+    try {
+      setIsCompressing(true);
+      setFileError(null);
+      const base64 = await comprimirImagen(file);
+      setComprobanteUrl(base64);
+      vibrarExito();
+    } catch (err) {
+      console.error('Error comprimiendo imagen:', err);
+      setFileError('No se pudo procesar la foto seleccionada.');
+    } finally {
+      setIsCompressing(false);
+      e.target.value = '';
+    }
+  };
 
   // Recálculo en vivo
   let comisionBancaria = 0;
@@ -128,6 +159,7 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
         estadoReembolso,
         nota: nota.trim() || undefined,
         tipo: isRetiro ? 'RETIRO_CAJERO' : isReembolso ? 'AUTO_REEMBOLSO' : 'GASTO',
+        comprobanteUrl: comprobanteUrl || undefined,
       };
 
       await onGuardar(movimientoActualizado);
@@ -277,6 +309,73 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
             disabled={isSaving}
             className="w-full px-3 py-2.5 bg-slate-950 rounded-xl border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
           />
+        </div>
+
+        {/* Foto de Comprobante / Factura */}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold text-slate-300">
+            Foto del Recibo / Factura
+          </span>
+          {comprobanteUrl ? (
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={comprobanteUrl}
+                  alt="Recibo adjunto"
+                  className="w-12 h-12 object-cover rounded-lg border border-slate-700 bg-slate-900"
+                />
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-white">Comprobante guardado</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">Foto optimizada</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setComprobanteUrl(undefined)}
+                disabled={isSaving}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800/60 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>✕ Quitar foto</span>
+              </button>
+            </div>
+          ) : (
+            <div>
+              <label
+                htmlFor="edit-photo-input"
+                className={`flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl border border-dashed text-xs font-bold cursor-pointer transition-colors ${
+                  isCompressing || isSaving
+                    ? 'bg-slate-800/50 border-slate-700 text-slate-400 pointer-events-none'
+                    : 'bg-slate-950/80 hover:bg-slate-850 border-slate-700 hover:border-amber-500/60 text-slate-300 hover:text-amber-300'
+                }`}
+              >
+                {isCompressing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                    <span>Optimizando foto de factura...</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4 text-amber-400" />
+                    <span>📷 Adjuntar Recibo / Factura</span>
+                  </>
+                )}
+              </label>
+              <input
+                id="edit-photo-input"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                disabled={isCompressing || isSaving}
+                className="hidden"
+                data-testid="edit-photo-input"
+              />
+            </div>
+          )}
+          {fileError && (
+            <span className="text-[11px] text-rose-400 px-1 font-medium">{fileError}</span>
+          )}
         </div>
 
         {/* Recalculated Financial Breakdown */}

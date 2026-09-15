@@ -198,4 +198,49 @@ describe('EditTransactionModal', () => {
     fireEvent.click(closeIconBtn);
     expect(onCloseMock).toHaveBeenCalledTimes(2);
   });
+
+  it('displays existing receipt photo and allows removing it before saving', async () => {
+    const onGuardarMock = vi.fn().mockResolvedValue(undefined);
+    const movConFoto: Movimiento = {
+      ...mockMovimientoUber,
+      id: 'mov-con-recibo',
+      comprobanteUrl: 'data:image/webp;base64,existing-photo-data',
+    };
+
+    render(
+      <EditTransactionModal
+        isOpen={true}
+        movimiento={movConFoto}
+        onClose={vi.fn()}
+        onGuardar={onGuardarMock}
+      />
+    );
+
+    // Should show photo preview
+    expect(screen.getByText('Comprobante guardado')).toBeInTheDocument();
+    expect(screen.getByAltText('Recibo adjunto')).toHaveAttribute(
+      'src',
+      'data:image/webp;base64,existing-photo-data'
+    );
+
+    // Remove photo
+    const removeBtn = screen.getByRole('button', { name: /✕ Quitar foto/i });
+    fireEvent.click(removeBtn);
+
+    // Now attach button should be displayed
+    expect(screen.getByText('📷 Adjuntar Recibo / Factura')).toBeInTheDocument();
+
+    // Save
+    const saveBtn = screen.getByRole('button', { name: /Guardar Cambios/i });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(onGuardarMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'mov-con-recibo',
+          comprobanteUrl: undefined,
+        })
+      );
+    });
+  });
 });

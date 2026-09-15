@@ -57,12 +57,14 @@ export default function App() {
     subcategoriaOtro,
     nota,
     tipo = 'GASTO',
+    comprobanteUrl,
   }: {
     categoria: CategoriaGasto;
     montoBase: number;
     subcategoriaOtro?: SubcategoriaOtro;
     nota?: string;
     tipo?: TipoMovimiento;
+    comprobanteUrl?: string;
   }) => {
     try {
       const isRetiro = tipo === 'RETIRO_CAJERO' || categoria === 'RETIRO_CAJERO';
@@ -78,6 +80,7 @@ export default function App() {
           montoTotalDebitado: montoBase,
           estadoReembolso: 'NO_APLICA',
           nota: nota || 'Retiro de efectivo cajero Produbanco',
+          comprobanteUrl,
         });
         vibrarExito();
         setToastMessage(`🏧 Retiro registrado: +$${montoBase.toFixed(2)} en efectivo`);
@@ -97,6 +100,7 @@ export default function App() {
         montoTotalDebitado: desglose.montoTotalDebitado,
         estadoReembolso: desglose.estadoReembolso,
         nota,
+        comprobanteUrl,
       });
 
       vibrarExito();
