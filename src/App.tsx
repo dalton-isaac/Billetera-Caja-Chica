@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Wallet, ShieldCheck, CheckCircle2, Scale } from 'lucide-react';
+import { Wallet, ShieldCheck, CheckCircle2, Scale, FileSpreadsheet } from 'lucide-react';
 import type {
   CategoriaGasto,
   MetodoPago,
@@ -18,6 +18,7 @@ import { TransactionHistory } from './components/TransactionHistory';
 import { EditTransactionModal } from './components/EditTransactionModal';
 import { AutoReimburseModal } from './components/AutoReimburseModal';
 import { ArqueoModal } from './components/ArqueoModal';
+import { ReportsModal } from './components/ReportsModal';
 import { vibrarExito } from './utils/vibration';
 
 export default function App() {
@@ -25,7 +26,9 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAutoReimburseOpen, setIsAutoReimburseOpen] = useState<boolean>(false);
   const [isArqueoOpen, setIsArqueoOpen] = useState<boolean>(false);
+  const [isReportsOpen, setIsReportsOpen] = useState<boolean>(false);
   const [editingMovimiento, setEditingMovimiento] = useState<Movimiento | null>(null);
+
 
   // Consulta reactiva en vivo con Dexie
   const movimientos = useLiveQuery(() => db.movimientos.toArray()) ?? [];
@@ -216,6 +219,14 @@ export default function App() {
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={() => setIsReportsOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-750 active:scale-95 border border-slate-700 hover:border-emerald-500/40 text-emerald-400 rounded-xl text-xs font-bold transition-all shadow-sm"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Reportes & Exportar</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setIsArqueoOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-750 active:scale-95 border border-slate-700 hover:border-emerald-500/40 text-emerald-400 rounded-xl text-xs font-bold transition-all shadow-sm"
           >
@@ -227,6 +238,7 @@ export default function App() {
             <span className="font-semibold text-[11px]">Offline</span>
           </div>
         </div>
+
       </header>
 
       {/* Main Screen Content */}
@@ -278,6 +290,16 @@ export default function App() {
         onGuardar={handleEditarMovimiento}
         config={config}
       />
+
+      {/* Modal de Reportes y Respaldo */}
+      <ReportsModal
+        isOpen={isReportsOpen}
+        onClose={() => setIsReportsOpen(false)}
+        movimientos={movimientos}
+        saldos={saldos}
+        onBackupRestored={() => setToastMessage('💾 Respaldo restaurado con éxito')}
+      />
     </div>
   );
 }
+

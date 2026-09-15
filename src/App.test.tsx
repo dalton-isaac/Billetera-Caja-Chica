@@ -168,5 +168,19 @@ describe('App', () => {
     // Toast feedback
     expect(screen.getByText('🗑️ Movimiento eliminado')).toBeInTheDocument();
   });
+
+  it('opens ReportsModal when Reportes & Exportar button is clicked', async () => {
+    render(<App />);
+
+    const reportesBtn = screen.getByRole('button', { name: /Reportes & Exportar/i });
+    fireEvent.click(reportesBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Reportes y Respaldo')).toBeInTheDocument();
+      expect(screen.getByText('Descargar Reporte PDF')).toBeInTheDocument();
+      expect(screen.getByText('Descargar Excel (.xlsx)')).toBeInTheDocument();
+    });
+  });
 });
+
 
