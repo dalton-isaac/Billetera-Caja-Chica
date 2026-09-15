@@ -4,15 +4,18 @@ import { Wallet, ShieldCheck, CheckCircle2, Scale } from 'lucide-react';
 import type {
   CategoriaGasto,
   MetodoPago,
+  Movimiento,
   RegistroArqueo,
   SubcategoriaOtro,
   TipoMovimiento,
 } from './types';
-import { db, obtenerConfiguracion, registrarMovimiento, registrarArqueo } from './db/db';
+import { db, obtenerConfiguracion, registrarMovimiento, registrarArqueo, eliminarMovimiento } from './db/db';
 import { calcularDesgloseGasto, calcularSaldosBolsillos, CONFIG_DEFAULT } from './utils/accounting';
 import { BalanceCards } from './components/BalanceCards';
 import { PaymentSelector } from './components/PaymentSelector';
 import { QuickActionGrid } from './components/QuickActionGrid';
+import { TransactionHistory } from './components/TransactionHistory';
+import { EditTransactionModal } from './components/EditTransactionModal';
 import { AutoReimburseModal } from './components/AutoReimburseModal';
 import { ArqueoModal } from './components/ArqueoModal';
 import { vibrarExito } from './utils/vibration';
@@ -22,6 +25,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAutoReimburseOpen, setIsAutoReimburseOpen] = useState<boolean>(false);
   const [isArqueoOpen, setIsArqueoOpen] = useState<boolean>(false);
+  const [editingMovimiento, setEditingMovimiento] = useState<Movimiento | null>(null);
 
   // Consulta reactiva en vivo con Dexie
   const movimientos = useLiveQuery(() => db.movimientos.toArray()) ?? [];
@@ -152,6 +156,31 @@ export default function App() {
     }
   };
 
+  const handleEditarMovimiento = async (movimientoActualizado: Movimiento) => {
+    try {
+      await db.movimientos.put(movimientoActualizado);
+      vibrarExito();
+      setToastMessage('✏️ Movimiento actualizado');
+      setEditingMovimiento(null);
+    } catch (error) {
+      console.error('Error actualizando movimiento:', error);
+      setToastMessage('❌ Error al actualizar el movimiento');
+      throw error;
+    }
+  };
+
+  const handleEliminarMovimiento = async (id: string) => {
+    try {
+      await eliminarMovimiento(id);
+      vibrarExito();
+      setToastMessage('🗑️ Movimiento eliminado');
+    } catch (error) {
+      console.error('Error eliminando movimiento:', error);
+      setToastMessage('❌ Error al eliminar el movimiento');
+      throw error;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-925 text-slate-100 flex flex-col items-center p-3 sm:p-5">
       {/* Toast Feedback Notification */}
@@ -214,6 +243,13 @@ export default function App() {
           onRegistrarGastoRapido={handleRegistrarGastoRapido}
           config={config}
         />
+
+        {/* Transaction History & Search */}
+        <TransactionHistory
+          movimientos={movimientos}
+          onEditarMovimiento={(m) => setEditingMovimiento(m)}
+          onEliminarMovimiento={handleEliminarMovimiento}
+        />
       </main>
 
       {/* Modal de Auto-Reembolso y Liquidación */}
@@ -232,6 +268,15 @@ export default function App() {
         saldoTeoricoBanco={saldos.saldoProdubanco}
         saldoTeoricoEfectivo={saldos.saldoEfectivo}
         onGuardarArqueo={handleGuardarArqueo}
+      />
+
+      {/* Modal de Edición de Movimiento */}
+      <EditTransactionModal
+        isOpen={editingMovimiento !== null}
+        movimiento={editingMovimiento}
+        onClose={() => setEditingMovimiento(null)}
+        onGuardar={handleEditarMovimiento}
+        config={config}
       />
     </div>
   );

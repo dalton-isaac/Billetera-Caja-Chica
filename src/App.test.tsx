@@ -83,4 +83,90 @@ describe('App', () => {
     // Verify toast
     expect(screen.getByText(/¡Acta guardada! Tu caja está 100% cuadrada/i)).toBeInTheDocument();
   });
+
+  it('allows editing a transaction from history and updates balances and DB in real time', async () => {
+    // Seed initial transaction
+    await registrarMovimiento({
+      id: 'test-edit-mov',
+      tipo: 'GASTO',
+      categoria: 'UBER',
+      metodoPago: 'DEBITO_PRODUBANCO',
+      montoBase: 5.00,
+      comisionBancaria: 0,
+      impuestoDigitalIVA: 0.75,
+      montoTotalDebitado: 5.75,
+      estadoReembolso: 'NO_APLICA',
+      nota: 'Viaje inicial',
+    });
+
+    render(<App />);
+
+    // Wait for movement to render in history
+    const editBtn = await screen.findByRole('button', { name: /Editar/i }, { timeout: 3000 });
+    fireEvent.click(editBtn);
+
+    // EditTransactionModal should open
+    await waitFor(() => {
+      expect(screen.getByText('Editar Movimiento')).toBeInTheDocument();
+    });
+
+    // Change amount from 5.00 to 10.00
+    const montoInput = screen.getByLabelText('Monto Base');
+    fireEvent.change(montoInput, { target: { value: '10.00' } });
+
+    // Save changes
+    const saveChangesBtn = screen.getByRole('button', { name: /Guardar Cambios/i });
+    fireEvent.click(saveChangesBtn);
+
+    // Verify DB updated
+    await waitFor(async () => {
+      const mov = await db.movimientos.get('test-edit-mov');
+      expect(mov?.montoBase).toBe(10.00);
+      expect(mov?.impuestoDigitalIVA).toBe(1.50);
+      expect(mov?.montoTotalDebitado).toBe(11.50);
+    });
+
+    // Toast feedback
+    expect(screen.getByText('✏️ Movimiento actualizado')).toBeInTheDocument();
+  });
+
+  it('allows deleting a transaction from history with confirmation and updates DB', async () => {
+    // Seed initial transaction
+    await registrarMovimiento({
+      id: 'test-delete-mov',
+      tipo: 'GASTO',
+      categoria: 'BUS_URBANO',
+      metodoPago: 'EFECTIVO_CAJA',
+      montoBase: 0.35,
+      comisionBancaria: 0,
+      impuestoDigitalIVA: 0,
+      montoTotalDebitado: 0.35,
+      estadoReembolso: 'NO_APLICA',
+    });
+
+    render(<App />);
+
+    // Wait for movement in history
+    const deleteBtn = await screen.findByRole('button', { name: /Eliminar/i }, { timeout: 3000 });
+    fireEvent.click(deleteBtn);
+
+    // Confirmation dialog appears
+    await waitFor(() => {
+      expect(screen.getByText('¿Eliminar movimiento?')).toBeInTheDocument();
+    });
+
+    // Confirm deletion
+    const confirmBtn = screen.getByRole('button', { name: 'Sí, Eliminar' });
+    fireEvent.click(confirmBtn);
+
+    // Verify removed from DB
+    await waitFor(async () => {
+      const mov = await db.movimientos.get('test-delete-mov');
+      expect(mov).toBeUndefined();
+    });
+
+    // Toast feedback
+    expect(screen.getByText('🗑️ Movimiento eliminado')).toBeInTheDocument();
+  });
 });
+
