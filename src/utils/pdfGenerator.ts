@@ -106,9 +106,20 @@ export function generarReportePDF(
   doc.text('DETALLE INDIVIDUAL DE MOVIMIENTOS Y GASTOS', 14, startYTabla - 2);
 
   const tableRows = movimientos.map((m) => {
-    const fechaHoraFormateada = m.fechaHora.includes('T')
-      ? `${m.fechaHora.split('T')[0]} ${m.fechaHora.split('T')[1]?.substring(0, 5) || ''}`
-      : m.fechaHora;
+    let fechaFormateada = m.fechaHora;
+    try {
+      const d = new Date(m.fechaHora);
+      if (!isNaN(d.getTime())) {
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth() + 1).padStart(2, '0');
+        const anio = d.getFullYear();
+        fechaFormateada = `${dia}/${mes}/${anio}`;
+      } else if (m.fechaHora.includes('T')) {
+        fechaFormateada = m.fechaHora.split('T')[0];
+      }
+    } catch {
+      fechaFormateada = m.fechaHora.split('T')[0] || m.fechaHora;
+    }
 
     let concepto = m.categoria ? m.categoria.replace('_', ' ') : m.tipo;
     if (m.tipo === 'RETIRO_CAJERO') {
@@ -133,7 +144,7 @@ export function generarReportePDF(
         : m.montoBase + (m.impuestoDigitalIVA || 0) + (m.comisionBancaria || 0);
 
     return [
-      fechaHoraFormateada,
+      fechaFormateada,
       concepto,
       metodoPagoStr,
       `$${m.montoBase.toFixed(2)}`,
@@ -148,7 +159,7 @@ export function generarReportePDF(
     startY: startYTabla,
     head: [
       [
-        'Fecha / Hora',
+        'Fecha',
         'Concepto',
         'Método de Pago',
         'Tarifa Base ($)',
@@ -176,7 +187,7 @@ export function generarReportePDF(
       fillColor: [248, 250, 252],
     },
     columnStyles: {
-      0: { cellWidth: 26 },
+      0: { cellWidth: 20, halign: 'center' },
       1: { cellWidth: 26 },
       2: { cellWidth: 27 },
       3: { cellWidth: 20, halign: 'right' },
