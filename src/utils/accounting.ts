@@ -11,7 +11,7 @@ import type {
 
 export const CONFIG_DEFAULT: ConfiguracionSistema = {
   baseMensual: 200.00,
-  costoTransferenciaSPI: 0.20,
+  costoTransferenciaSPI: 0.41,
   porcentajeIVADigital: 15,
   vibracionTactil: true,
 };
@@ -117,7 +117,7 @@ export function calcularSaldosBolsillos(
     }
 
     if (m.tipo === 'AUTO_REEMBOLSO') {
-      const comision = m.comisionBancaria !== undefined ? m.comisionBancaria : 0.20;
+      const comision = m.comisionBancaria !== undefined ? m.comisionBancaria : 0.41;
       const debitoReembolso = m.montoTotalDebitado > 0 ? m.montoTotalDebitado : (m.montoBase + comision);
       saldoProdubanco -= debitoReembolso;
       saldoPendienteReembolso -= m.montoBase;
@@ -180,7 +180,9 @@ export function calcularDiagnosticoArqueo(
   // Diagnóstico bancario (ej. comisión SPI no anotada, hasta 3 transferencias)
   if (diffBanco < -0.001) {
     const centsBanco = Math.round(Math.abs(diffBanco) * 100);
-    if (centsBanco <= 60 && centsBanco % 20 === 0) {
+    if (centsBanco <= 123 && (centsBanco === 41 || centsBanco === 82 || centsBanco === 123)) {
+      pistas.push('Posible comisión SPI de Produbanco no anotada ($0.41)');
+    } else if (centsBanco <= 60 && centsBanco % 20 === 0) {
       pistas.push('Posible comisión SPI de Produbanco no anotada ($0.20)');
     }
   }

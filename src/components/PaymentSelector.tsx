@@ -6,6 +6,7 @@ import { vibrarExito } from '../utils/vibration';
 interface PaymentSelectorProps {
   selected: MetodoPago;
   onSelect: (metodo: MetodoPago) => void;
+  costoTransferenciaSPI?: number;
 }
 
 interface MetodoOption {
@@ -17,42 +18,48 @@ interface MetodoOption {
   badge: string;
 }
 
-const OPCIONES_PAGO: MetodoOption[] = [
-  {
-    id: 'DEBITO_PRODUBANCO',
-    titulo: 'Débito Produbanco',
-    subtitulo: '+15% IVA si es Uber',
-    icono: CreditCard,
-    colorActivo: 'border-blue-500 bg-blue-950/40 text-blue-200 ring-2 ring-blue-500/50 shadow-blue-500/20',
-    badge: 'Tarjeta Banco',
-  },
-  {
-    id: 'EFECTIVO_CAJA',
-    titulo: 'Efectivo Caja',
-    subtitulo: 'Monedas/Billetes',
-    icono: Banknote,
-    colorActivo: 'border-emerald-500 bg-emerald-950/40 text-emerald-200 ring-2 ring-emerald-500/50 shadow-emerald-500/20',
-    badge: 'Caja Física',
-  },
-  {
-    id: 'DEUNA_PRODUBANCO',
-    titulo: 'De Una (Produbanco)',
-    subtitulo: '+$0.20 comisión SPI, $0 deuda',
-    icono: Smartphone,
-    colorActivo: 'border-amber-500 bg-amber-950/40 text-amber-200 ring-2 ring-amber-500/50 shadow-amber-500/20',
-    badge: 'Comisión $0.20',
-  },
-  {
-    id: 'DEUNA_PERSONAL',
-    titulo: 'De Una (Personal)',
-    subtitulo: 'Puesto de mi bolsillo, genera deuda',
-    icono: UserCheck,
-    colorActivo: 'border-rose-500 bg-rose-950/40 text-rose-200 ring-2 ring-rose-500/50 shadow-rose-500/20',
-    badge: 'A Reembolsar',
-  },
-];
+export const PaymentSelector: FC<PaymentSelectorProps> = ({
+  selected,
+  onSelect,
+  costoTransferenciaSPI = 0.41,
+}) => {
+  const spiStr = costoTransferenciaSPI.toFixed(2);
 
-export const PaymentSelector: FC<PaymentSelectorProps> = ({ selected, onSelect }) => {
+  const opcionesPago: MetodoOption[] = [
+    {
+      id: 'DEBITO_PRODUBANCO',
+      titulo: 'Débito Produbanco',
+      subtitulo: '+15% IVA si es Uber',
+      icono: CreditCard,
+      colorActivo: 'border-blue-500 bg-blue-950/40 text-blue-200 ring-2 ring-blue-500/50 shadow-blue-500/20',
+      badge: 'Tarjeta Banco',
+    },
+    {
+      id: 'EFECTIVO_CAJA',
+      titulo: 'Efectivo Caja',
+      subtitulo: 'Monedas/Billetes',
+      icono: Banknote,
+      colorActivo: 'border-emerald-500 bg-emerald-950/40 text-emerald-200 ring-2 ring-emerald-500/50 shadow-emerald-500/20',
+      badge: 'Caja Física',
+    },
+    {
+      id: 'DEUNA_PRODUBANCO',
+      titulo: 'De Una (Produbanco)',
+      subtitulo: `+$${spiStr} comisión SPI, $0 deuda`,
+      icono: Smartphone,
+      colorActivo: 'border-amber-500 bg-amber-950/40 text-amber-200 ring-2 ring-amber-500/50 shadow-amber-500/20',
+      badge: `Comisión $${spiStr}`,
+    },
+    {
+      id: 'DEUNA_PERSONAL',
+      titulo: 'De Una (Personal)',
+      subtitulo: 'Puesto de mi bolsillo, genera deuda',
+      icono: UserCheck,
+      colorActivo: 'border-rose-500 bg-rose-950/40 text-rose-200 ring-2 ring-rose-500/50 shadow-rose-500/20',
+      badge: 'A Reembolsar',
+    },
+  ];
+
   const handleSelect = (id: MetodoPago) => {
     vibrarExito();
     onSelect(id);
@@ -68,7 +75,7 @@ export const PaymentSelector: FC<PaymentSelectorProps> = ({ selected, onSelect }
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">
-        {OPCIONES_PAGO.map((opcion) => {
+        {opcionesPago.map((opcion) => {
           const isSelected = selected === opcion.id;
           const Icon = opcion.icono;
 

@@ -107,9 +107,9 @@ describe('EditTransactionModal', () => {
     const deUnaBtn = screen.getByRole('button', { name: /De Una \(Produbanco\)/i });
     fireEvent.click(deUnaBtn);
 
-    // Expect SPI commission of $0.20 and total $2.20
-    expect(screen.getByText('+$0.20')).toBeInTheDocument();
-    expect(screen.getByText('$2.20')).toBeInTheDocument();
+    // Expect SPI commission of $0.41 and total $2.41
+    expect(screen.getByText('+$0.41')).toBeInTheDocument();
+    expect(screen.getByText('$2.41')).toBeInTheDocument();
   });
 
   it('allows changing subcategory and note, then calls onGuardar with updated model', async () => {

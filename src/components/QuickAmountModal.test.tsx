@@ -40,7 +40,7 @@ describe('QuickAmountModal', () => {
     });
   });
 
-  it('shows SPI commission of $0.20 when paid with DEUNA_PRODUBANCO', () => {
+  it('shows SPI commission of $0.41 when paid with DEUNA_PRODUBANCO', () => {
     render(
       <QuickAmountModal
         isOpen={true}
@@ -55,8 +55,8 @@ describe('QuickAmountModal', () => {
     fireEvent.click(screen.getByRole('button', { name: '4' }));
 
     expect(screen.getByText('+ Comisión SPI (Produbanco):')).toBeInTheDocument();
-    expect(screen.getByText('+$0.20')).toBeInTheDocument();
-    expect(screen.getByText('$4.20')).toBeInTheDocument();
+    expect(screen.getByText('+$0.41')).toBeInTheDocument();
+    expect(screen.getByText('$4.41')).toBeInTheDocument();
   });
 
   it('allows selecting subcategory and adding note for OTROS', () => {

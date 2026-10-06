@@ -69,7 +69,7 @@ describe('excelGenerator', () => {
     expect(dataMov[1]['IVA Digital 15% ($)']).toBe(0.75);
     expect(dataMov[1]['Total Debitado ($)']).toBe(5.75);
     expect(dataMov[2]['Categoría']).toBe('Auto-Reembolso Personal');
-    expect(dataMov[2]['Comisión SPI $0.20 ($)']).toBe(0.20);
+    expect(dataMov[2]['Comisión SPI ($)']).toBe(0.20);
   });
 
   it('includes accounting summary rows in "Resumen Contable" sheet', () => {

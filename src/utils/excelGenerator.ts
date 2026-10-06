@@ -46,7 +46,7 @@ export function generarReporteExcel(
       'Método de Pago': m.metodoPago,
       'Monto Base ($)': Number(m.montoBase.toFixed(2)),
       'IVA Digital 15% ($)': Number((m.impuestoDigitalIVA || 0).toFixed(2)),
-      'Comisión SPI $0.20 ($)': Number((m.comisionBancaria || 0).toFixed(2)),
+      'Comisión SPI ($)': Number((m.comisionBancaria || 0).toFixed(2)),
       'Total Debitado ($)': Number(totalDebitado.toFixed(2)),
       'Estado Reembolso': m.estadoReembolso,
       Notas: m.nota || '',

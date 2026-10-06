@@ -38,9 +38,25 @@ describe('Capa de Persistencia Local Offline con Dexie.js (IndexedDB)', () => {
       const stored = await db.configuracion.get('default');
       expect(stored).toBeDefined();
       expect(stored?.baseMensual).toBe(200.0);
-      expect(stored?.costoTransferenciaSPI).toBe(0.2);
+      expect(stored?.costoTransferenciaSPI).toBe(0.41);
       expect(stored?.porcentajeIVADigital).toBe(15);
       expect(stored?.vibracionTactil).toBe(true);
+    });
+
+    it('debe migrar automáticamente la tarifa anterior de 0.20 a 0.41 al obtenerConfiguracion', async () => {
+      // Guardar tarifa antigua 0.20
+      await db.configuracion.put({
+        id: 'default',
+        baseMensual: 200.0,
+        costoTransferenciaSPI: 0.20,
+        porcentajeIVADigital: 15,
+        vibracionTactil: true,
+      });
+
+      const config = await obtenerConfiguracion();
+      expect(config.costoTransferenciaSPI).toBe(0.41);
+      const stored = await db.configuracion.get('default');
+      expect(stored?.costoTransferenciaSPI).toBe(0.41);
     });
 
     it('inicializarBaseDatos debe ser un alias funcional de obtenerConfiguracion', async () => {

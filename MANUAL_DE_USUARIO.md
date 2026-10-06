@@ -28,7 +28,7 @@ Bienvenido a tu manual de usuario. Esta aplicación fue diseñada específicamen
 
 Cuando andas en la calle haciendo entregas, ocurren dos problemas típicos:
 1. **Pones plata de tu bolsillo:** No hay suelto en la caja chica de la empresa, así que le pagas al chofer o al restaurante con tu **De Una personal** o tus billetes propios. Al final del mes se te olvida cuánto pusiste y terminas perdiendo dinero.
-2. **Impuestos ocultos y comisiones:** Si pagas Uber con tarjeta de débito te cobran **15% de IVA digital**. Si transfieres de Produbanco a Pichincha te descuentan **$0.20 de SPI**. Esos centavos hacen que al final la cuenta bancaria de la empresa no cuadre con tus recibos.
+2. **Impuestos ocultos y comisiones:** Si pagas Uber con tarjeta de débito te cobran **15% de IVA digital**. Si transfieres de Produbanco a Pichincha te descuentan **$0.41 de SPI**. Esos centavos hacen que al final la cuenta bancaria de la empresa no cuadre con tus recibos.
 
 Esta app **calcula todo automáticamente**, separa lo que es plata de la empresa de lo que es tu dinero personal, y te permite generar un reporte formal para que la empresa te reintegre cada centavo.
 
@@ -137,8 +137,8 @@ Cuando hayas pagado cosas con tu cuenta personal de Banco Pichincha (De Una) o d
    * **Cobro Parcial:** Te permite ingresar un monto menor si solo quieres retirar una parte hoy.
 4. La app te mostrará el desglose:
    * Monto a tu favor: `$15.00`
-   * Comisión interbancaria SPI: `$0.20`
-   * Total que saldrá de Produbanco: `$15.20`
+   * Comisión interbancaria SPI: `$0.41`
+   * Total que saldrá de Produbanco: `$15.41`
 5. **En tu app bancaria real:** Abre la app de Produbanco y hazte la transferencia interbancaria hacia tu cuenta de Banco Pichincha por los $15.00.
 6. **En la Billetera:** Presiona **`[ Confirmar Cobro ]`**.
 7. Tu deuda personal volverá a **$0.00** y la caja chica quedará totalmente cuadrada.
@@ -159,7 +159,7 @@ Al terminar tu turno o la semana, puedes verificar en 60 segundos si tu dinero f
    * 🔴 **FALTANTE (-$$):** Te falta dinero físico en el bolsillo.
 4. **Diagnóstico Inteligente:** Si hay diferencia, la app analiza los números y te da pistas útiles como:
    * *"Posible pasaje de bus no anotado ($0.35)"*.
-   * *"Posible comisión bancaria no registrada ($0.20)"*.
+   * *"Posible comisión bancaria no registrada ($0.41)"*.
 5. Presiona **`[ Guardar Registro de Arqueo ]`** para guardar la constancia histórica.
 
 ---
@@ -190,6 +190,11 @@ Cuando te toque rendir cuentas a tu jefe o al departamento contable:
    * Incluye la fecha de cada gasto, concepto, método de pago, desglose de tarifa base, IVA digital y comisión SPI.
    * Incluye las fotos de las facturas adjuntas en la última hoja.
 4. También puedes pulsar **`[ 📊 Exportar a Excel ]`** si en tu oficina prefieren el formato de hoja de cálculo.
+
+### ⚙️ Configurar Tarifas (Comisión SPI y Fondo Base)
+En la misma ventana de **Reportes**, encontrarás la sección **"Configuración de Tarifas y Caja"**:
+* Puedes consultar o cambiar la **Comisión SPI** (actualmente fijada en **$0.41**) o tu **Fondo Base Mensual** (por defecto **$200.00**).
+* Si tu banco cambia la comisión en el futuro, solo escribes el nuevo valor y tocas **`[ Actualizar Tarifas y Base ]`**. La app se adaptará inmediatamente.
 
 ---
 

@@ -34,11 +34,17 @@ export const db = new BilleteraDB('BilleteraCajaChicaDB');
 
 /**
  * Obtiene la configuración del sistema o inicializa la configuración por defecto
- * (base $200.00, SPI $0.20, IVA Digital 15%, vibración táctil activada).
+ * (base $200.00, SPI $0.41, IVA Digital 15%, vibración táctil activada).
  */
 export async function obtenerConfiguracion(): Promise<ConfiguracionSistema> {
   const item = await db.configuracion.get('default');
   if (item) {
+    // Si la configuración almacenada aún tiene la tarifa anterior de 0.20,
+    // se migra automáticamente a la nueva tarifa oficial de 0.41
+    if (item.costoTransferenciaSPI === 0.20) {
+      item.costoTransferenciaSPI = 0.41;
+      await db.configuracion.put(item);
+    }
     return {
       baseMensual: item.baseMensual,
       costoTransferenciaSPI: item.costoTransferenciaSPI,

@@ -18,7 +18,7 @@ export const AutoReimburseModal: FC<AutoReimburseModalProps> = ({
   isOpen,
   onClose,
   saldoPendiente,
-  costoTransferenciaSPI = 0.20,
+  costoTransferenciaSPI = 0.41,
   onConfirmarReembolso,
 }) => {
   const [modoCobro, setModoCobro] = useState<'TOTAL' | 'PARCIAL'>('TOTAL');

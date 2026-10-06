@@ -49,8 +49,8 @@ describe('App', () => {
       const autoReembolso = movimientos.find((m) => m.tipo === 'AUTO_REEMBOLSO');
       expect(autoReembolso).toBeDefined();
       expect(autoReembolso?.montoBase).toBe(15.00);
-      expect(autoReembolso?.comisionBancaria).toBe(0.20);
-      expect(autoReembolso?.montoTotalDebitado).toBe(15.20);
+      expect(autoReembolso?.comisionBancaria).toBe(0.41);
+      expect(autoReembolso?.montoTotalDebitado).toBe(15.41);
       expect(autoReembolso?.metodoPago).toBe('DEBITO_PRODUBANCO');
     });
   });

@@ -251,7 +251,11 @@ export default function App() {
         <BalanceCards saldos={saldos} onCobrarReembolso={handleCobrarReembolso} />
 
         {/* Payment Method Selector */}
-        <PaymentSelector selected={metodoPago} onSelect={setMetodoPago} />
+        <PaymentSelector
+          selected={metodoPago}
+          onSelect={setMetodoPago}
+          costoTransferenciaSPI={config.costoTransferenciaSPI}
+        />
 
         {/* Quick 1-Tap Action Grid */}
         <QuickActionGrid

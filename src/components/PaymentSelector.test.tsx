@@ -14,10 +14,23 @@ describe('PaymentSelector', () => {
     expect(screen.getByText('Monedas/Billetes')).toBeInTheDocument();
 
     expect(screen.getByText('De Una (Produbanco)')).toBeInTheDocument();
-    expect(screen.getByText('+$0.20 comisión SPI, $0 deuda')).toBeInTheDocument();
+    expect(screen.getByText('+$0.41 comisión SPI, $0 deuda')).toBeInTheDocument();
 
     expect(screen.getByText('De Una (Personal)')).toBeInTheDocument();
     expect(screen.getByText('Puesto de mi bolsillo, genera deuda')).toBeInTheDocument();
+  });
+
+  it('renders custom SPI fee when costoTransferenciaSPI is provided', () => {
+    const onSelect = vi.fn();
+    render(
+      <PaymentSelector
+        selected="DEBITO_PRODUBANCO"
+        onSelect={onSelect}
+        costoTransferenciaSPI={0.20}
+      />,
+    );
+
+    expect(screen.getByText('+$0.20 comisión SPI, $0 deuda')).toBeInTheDocument();
   });
 
   it('indicates the active payment method and triggers callback on select', () => {

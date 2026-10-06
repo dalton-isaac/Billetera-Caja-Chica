@@ -15,7 +15,7 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
   describe('CONFIG_DEFAULT', () => {
     it('debe contener los valores por defecto del sistema contable', () => {
       expect(CONFIG_DEFAULT.baseMensual).toBe(200.00);
-      expect(CONFIG_DEFAULT.costoTransferenciaSPI).toBe(0.20);
+      expect(CONFIG_DEFAULT.costoTransferenciaSPI).toBe(0.41);
       expect(CONFIG_DEFAULT.porcentajeIVADigital).toBe(15);
       expect(CONFIG_DEFAULT.vibracionTactil).toBe(true);
     });
@@ -55,23 +55,23 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       expect(comida.montoTotalDebitado).toBe(5.50);
     });
 
-    it('debe aplicar comisión SPI de $0.20 y $0 IVA cuando se paga con DEUNA_PRODUBANCO', () => {
+    it('debe aplicar comisión SPI de $0.41 y $0 IVA cuando se paga con DEUNA_PRODUBANCO', () => {
       const indrive = calcularDesgloseGasto('INDRIVE', 'DEUNA_PRODUBANCO', 5.00);
 
       expect(indrive.montoBase).toBe(5.00);
-      expect(indrive.comisionBancaria).toBe(0.20);
+      expect(indrive.comisionBancaria).toBe(0.41);
       expect(indrive.impuestoDigitalIVA).toBe(0);
-      expect(indrive.montoTotalDebitado).toBe(5.20);
+      expect(indrive.montoTotalDebitado).toBe(5.41);
       expect(indrive.estadoReembolso).toBe('NO_APLICA');
     });
 
-    it('inDrive/Uber con DEUNA_PRODUBANCO no debe generar IVA digital pero sí comisión SPI de $0.20', () => {
+    it('inDrive/Uber con DEUNA_PRODUBANCO no debe generar IVA digital pero sí comisión SPI de $0.41', () => {
       const uberDeUna = calcularDesgloseGasto('UBER', 'DEUNA_PRODUBANCO', 10.00);
 
       expect(uberDeUna.montoBase).toBe(10.00);
-      expect(uberDeUna.comisionBancaria).toBe(0.20);
+      expect(uberDeUna.comisionBancaria).toBe(0.41);
       expect(uberDeUna.impuestoDigitalIVA).toBe(0);
-      expect(uberDeUna.montoTotalDebitado).toBe(10.20);
+      expect(uberDeUna.montoTotalDebitado).toBe(10.41);
       expect(uberDeUna.estadoReembolso).toBe('NO_APLICA');
     });
 
@@ -502,6 +502,16 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       const diag40 = calcularDiagnosticoArqueo(149.60, 45.00, 150.00, 45.00);
       expect(diag40.diffBanco).toBe(-0.40);
       expect(diag40.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.20)');
+    });
+
+    it('debe sugerir nueva comisión SPI ante descuadres de -$0.41 y -$0.82 en banco', () => {
+      const diag41 = calcularDiagnosticoArqueo(149.59, 45.00, 150.00, 45.00);
+      expect(diag41.diffBanco).toBe(-0.41);
+      expect(diag41.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.41)');
+
+      const diag82 = calcularDiagnosticoArqueo(149.18, 45.00, 150.00, 45.00);
+      expect(diag82.diffBanco).toBe(-0.82);
+      expect(diag82.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.41)');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useId, useRef, type FC, type ChangeEvent } from 'react';
+import { useState, useEffect, useId, useRef, type FC, type ChangeEvent } from 'react';
 import {
   X,
   FileText,
@@ -11,12 +11,15 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  Settings,
+  Save,
 } from 'lucide-react';
 import type { Movimiento, SaldosBolsillos } from '../types';
 import { calcularSaldosBolsillos } from '../utils/accounting';
 import { generarReportePDF } from '../utils/pdfGenerator';
 import { generarReporteExcel } from '../utils/excelGenerator';
 import { exportarBackupJSON, importarBackupJSON } from '../utils/backupRestore';
+import { obtenerConfiguracion, guardarConfiguracion } from '../db/db';
 import { vibrarExito } from '../utils/vibration';
 
 export interface ReportsModalProps {
@@ -52,10 +55,46 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isConfirmingRestore, setIsConfirmingRestore] = useState<boolean>(false);
   const [pendingRestoreJson, setPendingRestoreJson] = useState<string | null>(null);
+  const [costoSpiInput, setCostoSpiInput] = useState<string>('0.41');
+  const [baseMensualInput, setBaseMensualInput] = useState<string>('200.00');
+  const [isSavingConfig, setIsSavingConfig] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const monthSelectId = useId();
   const nombreInputId = useId();
+
+  useEffect(() => {
+    if (isOpen) {
+      obtenerConfiguracion().then((cfg) => {
+        setCostoSpiInput(cfg.costoTransferenciaSPI.toFixed(2));
+        setBaseMensualInput(cfg.baseMensual.toFixed(2));
+      });
+    }
+  }, [isOpen]);
+
+  const handleGuardarConfig = async () => {
+    try {
+      setIsSavingConfig(true);
+      const nuevoSpi = parseFloat(costoSpiInput) || 0.41;
+      const nuevaBase = parseFloat(baseMensualInput) || 200.00;
+      await guardarConfiguracion({
+        costoTransferenciaSPI: nuevoSpi,
+        baseMensual: nuevaBase,
+      });
+      vibrarExito();
+      setStatusMessage({
+        tipo: 'success',
+        texto: `Tarifa SPI ($${nuevoSpi.toFixed(2)}) y base ($${nuevaBase.toFixed(2)}) actualizadas.`,
+      });
+    } catch {
+      setStatusMessage({
+        tipo: 'error',
+        texto: 'No se pudo guardar la configuración.',
+      });
+    } finally {
+      setIsSavingConfig(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -416,6 +455,67 @@ export const ReportsModal: FC<ReportsModalProps> = ({
                   Movimientos y resumen contable
                 </p>
               </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Sección: Configuración de Tarifas y Parámetros */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-slate-800">
+          <div className="flex items-center justify-between px-1">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Settings className="w-3.5 h-3.5 text-slate-400" />
+              Configuración de Tarifas y Caja
+            </p>
+          </div>
+
+          <div className="bg-slate-850 border border-slate-750/80 rounded-2xl p-3 flex flex-col gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">
+                  Comisión SPI ($)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-slate-400">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={costoSpiInput}
+                    onChange={(e) => setCostoSpiInput(e.target.value)}
+                    aria-label="Tarifa Comisión SPI"
+                    className="w-full pl-6 pr-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-emerald-500"
+                    placeholder="0.41"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] text-slate-400 mb-1">
+                  Fondo Base Mensual ($)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs text-slate-400">$</span>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    value={baseMensualInput}
+                    onChange={(e) => setBaseMensualInput(e.target.value)}
+                    aria-label="Fondo Base Mensual"
+                    className="w-full pl-6 pr-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-emerald-500"
+                    placeholder="200.00"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGuardarConfig}
+              disabled={isSavingConfig}
+              className="w-full py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors active:scale-[0.99]"
+            >
+              <Save className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isSavingConfig ? 'Guardando...' : 'Actualizar Tarifas y Base'}</span>
             </button>
           </div>
         </div>
