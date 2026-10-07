@@ -1,5 +1,17 @@
 import { useState, useEffect, type FC } from 'react';
-import { X, Save, AlertCircle, Loader2, Edit3, CreditCard, Banknote, Smartphone, UserCheck, Camera } from 'lucide-react';
+import {
+  X,
+  Save,
+  AlertCircle,
+  Loader2,
+  Edit3,
+  CreditCard,
+  Banknote,
+  Smartphone,
+  UserCheck,
+  Camera,
+  Calendar,
+} from 'lucide-react';
 import type {
   CategoriaGasto,
   ConfiguracionSistema,
@@ -57,6 +69,7 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
   config = CONFIG_DEFAULT,
 }) => {
   const [montoBaseStr, setMontoBaseStr] = useState<string>('');
+  const [fechaInput, setFechaInput] = useState<string>('');
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('DEBITO_PRODUBANCO');
   const [categoria, setCategoria] = useState<CategoriaGasto>('OTROS');
   const [subcategoriaOtro, setSubcategoriaOtro] = useState<SubcategoriaOtro>('VARIOS');
@@ -70,6 +83,10 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
   useEffect(() => {
     if (isOpen && movimiento) {
       setMontoBaseStr(movimiento.montoBase.toFixed(2));
+      const fechaBase = movimiento.fechaHora?.includes('T')
+        ? movimiento.fechaHora.split('T')[0]
+        : (movimiento.fechaHora?.slice(0, 10) || new Date().toISOString().slice(0, 10));
+      setFechaInput(fechaBase);
       setMetodoPago(movimiento.metodoPago);
       setCategoria(movimiento.categoria || 'OTROS');
       setSubcategoriaOtro(movimiento.subcategoriaOtro || 'VARIOS');
@@ -147,8 +164,15 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
       setErrorMsg(null);
       vibrarExito();
 
+      let horaOriginal = '12:00:00.000Z';
+      if (movimiento.fechaHora?.includes('T')) {
+        horaOriginal = movimiento.fechaHora.split('T')[1];
+      }
+      const fechaHoraActualizada = fechaInput ? `${fechaInput}T${horaOriginal}` : movimiento.fechaHora;
+
       const movimientoActualizado: Movimiento = {
         ...movimiento,
+        fechaHora: fechaHoraActualizada,
         montoBase: numericAmount,
         metodoPago,
         categoria: isReembolso ? movimiento.categoria : categoria,
@@ -186,7 +210,7 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
                 Editar Movimiento
               </h2>
               <span className="text-xs text-slate-400">
-                Ajustar monto, método de pago o notas
+                Ajustar fecha, monto, método de pago o notas
               </span>
             </div>
           </div>
@@ -199,6 +223,26 @@ export const EditTransactionModal: FC<EditTransactionModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Fecha del Movimiento Input */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="edit-fecha-movimiento" className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <span>Fecha del Movimiento</span>
+            </span>
+            <span className="text-[10px] text-slate-400">Asignar a mes o ciclo</span>
+          </label>
+          <input
+            id="edit-fecha-movimiento"
+            type="date"
+            value={fechaInput}
+            onChange={(e) => setFechaInput(e.target.value)}
+            disabled={isSaving}
+            aria-label="Fecha del Movimiento"
+            className="w-full px-3.5 py-2.5 bg-slate-950 rounded-xl border border-slate-700 text-sm font-medium text-white focus:outline-none focus:border-amber-500"
+          />
         </div>
 
         {/* Monto Base Input */}

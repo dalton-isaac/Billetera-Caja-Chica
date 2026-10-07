@@ -132,7 +132,7 @@ export const BalanceCards: FC<BalanceCardsProps> = ({ saldos, onCobrarReembolso 
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1 text-slate-400">
             <TrendingDown className="w-3.5 h-3.5 text-slate-400" />
-            <span>Gastos acumulados del mes:</span>
+            <span>Gastos acumulados del ciclo:</span>
           </div>
           <span className="font-bold text-slate-200">
             ${saldos.totalGastosMes.toFixed(2)}{' '}

@@ -193,4 +193,51 @@ describe('ReportsModal', () => {
       expect(screen.getByText(/Base de datos restaurada con éxito/i)).toBeInTheDocument();
     });
   });
+
+  it('allows selecting a custom date range and custom cycle name for report export', async () => {
+    const pdfSpy = vi.spyOn(pdfGen, 'generarReportePDF').mockImplementation(() => ({} as any));
+    const excelSpy = vi.spyOn(excelGen, 'generarReporteExcel').mockImplementation(() => ({} as any));
+
+    render(
+      <ReportsModal
+        isOpen={true}
+        onClose={vi.fn()}
+        movimientos={mockMovimientos}
+        saldos={mockSaldos}
+      />,
+    );
+
+    // Switch to Ciclo / Rango Fechas
+    const rangoTab = screen.getByRole('button', { name: /Ciclo \/ Rango Fechas/i });
+    fireEvent.click(rangoTab);
+
+    // Set date range: only 2026-09-01 to 2026-09-30 (includes mov-1, excludes mov-2 from August)
+    const fechaDesdeInput = screen.getByLabelText('Fecha Desde');
+    const fechaHastaInput = screen.getByLabelText('Fecha Hasta');
+    const nombreCicloInput = screen.getByLabelText('Nombre del Ciclo');
+
+    fireEvent.change(fechaDesdeInput, { target: { value: '2026-09-01' } });
+    fireEvent.change(fechaHastaInput, { target: { value: '2026-09-30' } });
+    fireEvent.change(nombreCicloInput, { target: { value: 'Caja Chica Sep - Oct' } });
+
+    // Download PDF
+    const pdfBtn = screen.getByRole('button', { name: /Descargar Reporte PDF/i });
+    fireEvent.click(pdfBtn);
+
+    expect(pdfSpy).toHaveBeenCalledTimes(1);
+    const pdfCallArgs = pdfSpy.mock.calls[0];
+    expect(pdfCallArgs[0]).toHaveLength(1);
+    expect(pdfCallArgs[0][0].id).toBe('mov-1');
+    expect(pdfCallArgs[2]).toBe('Caja Chica Sep - Oct');
+
+    // Download Excel
+    const excelBtn = screen.getByRole('button', { name: /Descargar Excel \(\.xlsx\)/i });
+    fireEvent.click(excelBtn);
+
+    expect(excelSpy).toHaveBeenCalledTimes(1);
+    const excelCallArgs = excelSpy.mock.calls[0];
+    expect(excelCallArgs[0]).toHaveLength(1);
+    expect(excelCallArgs[0][0].id).toBe('mov-1');
+    expect(excelCallArgs[2]).toBe('Caja Chica Sep - Oct');
+  });
 });

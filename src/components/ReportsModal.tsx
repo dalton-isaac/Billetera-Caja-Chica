@@ -38,6 +38,13 @@ function getNombreMes(mesAnio: string): string {
   return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 }
 
+function formatearFechaCorta(fechaStr: string): string {
+  if (!fechaStr) return '';
+  const [y, m, d] = fechaStr.split('-');
+  if (!y || !m || !d) return fechaStr;
+  return `${d}/${m}/${y}`;
+}
+
 export const ReportsModal: FC<ReportsModalProps> = ({
   isOpen,
   onClose,
@@ -46,7 +53,16 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   onBackupRestored,
 }) => {
   const currentMonth = new Date().toISOString().slice(0, 7);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [tipoFiltro, setTipoFiltro] = useState<'MES' | 'RANGO'>('MES');
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+  const [fechaDesde, setFechaDesde] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [fechaHasta, setFechaHasta] = useState<string>(todayStr);
+  const [tituloPeriodoRango, setTituloPeriodoRango] = useState<string>('');
   const [nombreMensajero, setNombreMensajero] = useState<string>('Isaac Alarcón');
   const [statusMessage, setStatusMessage] = useState<{
     tipo: 'success' | 'error' | 'info';
@@ -62,6 +78,9 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const monthSelectId = useId();
   const nombreInputId = useId();
+  const fechaDesdeId = useId();
+  const fechaHastaId = useId();
+  const tituloRangoId = useId();
 
   useEffect(() => {
     if (isOpen) {
@@ -111,11 +130,18 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   }
   const mesesDisponibles = Array.from(mesesSet).sort().reverse();
 
-  // Filtrar movimientos según mes seleccionado
+  // Filtrar movimientos según mes o rango seleccionado
   const movimientosFiltrados =
-    selectedMonth === 'TODOS'
-      ? movimientos
-      : movimientos.filter((m) => m.fechaHora.startsWith(selectedMonth));
+    tipoFiltro === 'MES'
+      ? selectedMonth === 'TODOS'
+        ? movimientos
+        : movimientos.filter((m) => m.fechaHora.startsWith(selectedMonth))
+      : movimientos.filter((m) => {
+          const mDate = m.fechaHora ? m.fechaHora.split('T')[0] : '';
+          if (fechaDesde && mDate < fechaDesde) return false;
+          if (fechaHasta && mDate > fechaHasta) return false;
+          return true;
+        });
 
   // Recalcular saldos para el período seleccionado
   const saldosReporte = calcularSaldosBolsillos(
@@ -124,6 +150,14 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   );
 
   const mesEtiqueta = getNombreMes(selectedMonth);
+  const periodoEtiqueta =
+    tipoFiltro === 'MES'
+      ? mesEtiqueta
+      : tituloPeriodoRango.trim()
+      ? tituloPeriodoRango.trim()
+      : fechaDesde && fechaHasta
+      ? `Del ${formatearFechaCorta(fechaDesde)} al ${formatearFechaCorta(fechaHasta)}`
+      : 'Ciclo Personalizado';
 
   const handleDescargarPDF = () => {
     try {
@@ -132,14 +166,15 @@ export const ReportsModal: FC<ReportsModalProps> = ({
       generarReportePDF(
         movimientosFiltrados,
         saldosReporte,
-        mesEtiqueta,
+        periodoEtiqueta,
         nombreMensajero.trim() || 'Responsable de Movilización',
         true,
       );
       vibrarExito();
+      const periodoSanitizado = periodoEtiqueta.trim().replace(/[/\\?%*:|"<>]+/g, '-').replace(/\s+/g, '_');
       setStatusMessage({
         tipo: 'success',
-        texto: `📄 Reporte PDF descargado: Rendicion_Caja_Chica_Quito_${mesEtiqueta.replace(/\s+/g, '_')}.pdf`,
+        texto: `📄 Reporte PDF descargado: Rendicion_Caja_Chica_Quito_${periodoSanitizado}.pdf`,
       });
     } catch (error) {
       console.error('Error generando PDF:', error);
@@ -156,11 +191,12 @@ export const ReportsModal: FC<ReportsModalProps> = ({
     try {
       setIsProcessing(true);
       setStatusMessage(null);
-      generarReporteExcel(movimientosFiltrados, saldosReporte, mesEtiqueta, true);
+      generarReporteExcel(movimientosFiltrados, saldosReporte, periodoEtiqueta, true);
       vibrarExito();
+      const periodoSanitizado = periodoEtiqueta.trim().replace(/[/\\?%*:|"<>]+/g, '-').replace(/\s+/g, '_');
       setStatusMessage({
         tipo: 'success',
-        texto: `📊 Reporte Excel descargado: Reporte_Caja_Chica_${mesEtiqueta.replace(/\s+/g, '_')}.xlsx`,
+        texto: `📊 Reporte Excel descargado: Reporte_Caja_Chica_${periodoSanitizado}.xlsx`,
       });
     } catch (error) {
       console.error('Error generando Excel:', error);
@@ -349,43 +385,137 @@ export const ReportsModal: FC<ReportsModalProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div>
-              <label htmlFor={monthSelectId} className="block text-[10px] text-slate-400 mb-1">
-                Mes / Historial
-              </label>
-              <select
-                id={monthSelectId}
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500"
-              >
-                <option value="TODOS">Todos los meses (Todo el historial)</option>
-                {mesesDisponibles.map((m) => (
-                  <option key={m} value={m}>
-                    {getNombreMes(m)}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Selector de Tipo de Filtro: Mes vs Ciclo/Rango */}
+          <div className="grid grid-cols-2 gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => setTipoFiltro('MES')}
+              className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                tipoFiltro === 'MES'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Mes Calendario</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTipoFiltro('RANGO')}
+              className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                tipoFiltro === 'RANGO'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <span>Ciclo / Rango Fechas</span>
+            </button>
+          </div>
 
-            <div>
-              <label htmlFor={nombreInputId} className="block text-[10px] text-slate-400 mb-1">
-                Responsable de Caja
-              </label>
-              <div className="relative">
-                <input
-                  id={nombreInputId}
-                  type="text"
-                  value={nombreMensajero}
-                  onChange={(e) => setNombreMensajero(e.target.value)}
-                  placeholder="Nombre de quien rinde cuentas"
-                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500 pl-7"
-                />
-                <User className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" />
+          {tipoFiltro === 'MES' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label htmlFor={monthSelectId} className="block text-[10px] text-slate-400 mb-1">
+                  Mes / Historial
+                </label>
+                <select
+                  id={monthSelectId}
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500"
+                >
+                  <option value="TODOS">Todos los meses (Todo el historial)</option>
+                  {mesesDisponibles.map((m) => (
+                    <option key={m} value={m}>
+                      {getNombreMes(m)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor={nombreInputId} className="block text-[10px] text-slate-400 mb-1">
+                  Responsable de Caja
+                </label>
+                <div className="relative">
+                  <input
+                    id={nombreInputId}
+                    type="text"
+                    value={nombreMensajero}
+                    onChange={(e) => setNombreMensajero(e.target.value)}
+                    placeholder="Nombre de quien rinde cuentas"
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500 pl-7"
+                  />
+                  <User className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor={fechaDesdeId} className="block text-[10px] text-slate-400 mb-1">
+                    Fecha Desde
+                  </label>
+                  <input
+                    id={fechaDesdeId}
+                    type="date"
+                    aria-label="Fecha Desde"
+                    value={fechaDesde}
+                    onChange={(e) => setFechaDesde(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor={fechaHastaId} className="block text-[10px] text-slate-400 mb-1">
+                    Fecha Hasta
+                  </label>
+                  <input
+                    id={fechaHastaId}
+                    type="date"
+                    aria-label="Fecha Hasta"
+                    value={fechaHasta}
+                    onChange={(e) => setFechaHasta(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label htmlFor={tituloRangoId} className="block text-[10px] text-slate-400 mb-1">
+                    Nombre del Ciclo (Opcional)
+                  </label>
+                  <input
+                    id={tituloRangoId}
+                    type="text"
+                    aria-label="Nombre del Ciclo"
+                    value={tituloPeriodoRango}
+                    onChange={(e) => setTituloPeriodoRango(e.target.value)}
+                    placeholder="Ej. Caja Chica Sep - Oct"
+                    className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor={nombreInputId} className="block text-[10px] text-slate-400 mb-1">
+                    Responsable de Caja
+                  </label>
+                  <div className="relative">
+                    <input
+                      id={nombreInputId}
+                      type="text"
+                      value={nombreMensajero}
+                      onChange={(e) => setNombreMensajero(e.target.value)}
+                      placeholder="Nombre de quien rinde cuentas"
+                      className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:border-emerald-500 pl-7"
+                    />
+                    <User className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Mini Resumen del Periodo */}
           <div className="pt-2 border-t border-slate-800/80 grid grid-cols-3 gap-1.5 text-center">

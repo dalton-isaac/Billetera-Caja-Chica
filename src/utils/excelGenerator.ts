@@ -75,7 +75,7 @@ export function generarReporteExcel(
   const wsResumen = XLSX.utils.json_to_sheet(rowsResumen);
   XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen Contable');
 
-  const mesSanitizado = (mesTexto || 'General').trim().replace(/\s+/g, '_');
+  const mesSanitizado = (mesTexto || 'General').trim().replace(/[/\\?%*:|"<>]+/g, '-').replace(/\s+/g, '_');
   const fileName = `Reporte_Caja_Chica_${mesSanitizado}.xlsx`;
 
   if (descargar) {

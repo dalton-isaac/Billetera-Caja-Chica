@@ -226,7 +226,7 @@ export function generarReportePDF(
   doc.text('Firma y Sello de Recepción', 125, finalY + 8.5);
   doc.text('Fecha Recibido: _____/_____/2026', 125, finalY + 12.5);
 
-  const mesSanitizado = periodo.trim().replace(/\s+/g, '_');
+  const mesSanitizado = periodo.trim().replace(/[/\\?%*:|"<>]+/g, '-').replace(/\s+/g, '_');
   const fileName = `Rendicion_Caja_Chica_Quito_${mesSanitizado}.pdf`;
 
   if (descargar) {

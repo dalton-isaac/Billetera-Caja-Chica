@@ -276,4 +276,31 @@ describe('EditTransactionModal', () => {
       );
     });
   });
+
+  it('allows changing the date of the movement to reassign between months or cycles', async () => {
+    const onGuardarMock = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <EditTransactionModal
+        isOpen={true}
+        movimiento={mockMovimientoOtro}
+        onClose={vi.fn()}
+        onGuardar={onGuardarMock}
+      />
+    );
+
+    const fechaInput = screen.getByLabelText('Fecha del Movimiento');
+    fireEvent.change(fechaInput, { target: { value: '2026-09-30' } });
+
+    const saveBtn = screen.getByRole('button', { name: /Guardar Cambios/i });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(onGuardarMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fechaHora: expect.stringMatching(/^2026-09-30/),
+        })
+      );
+    });
+  });
 });

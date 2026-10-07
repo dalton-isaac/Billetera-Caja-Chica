@@ -166,30 +166,37 @@ Al terminar tu turno o la semana, puedes verificar en 60 segundos si tu dinero f
 
 ## 8. Corregir o Eliminar un Gasto Mal Anotado
 
-Si te equivocaste al digitar un valor o pusiste una categoría incorrecta:
+Si te equivocaste al digitar un valor, pusiste una categoría incorrecta o necesitas cambiar la fecha:
 
 1. Ve a la sección **"Historial de Movimientos"** abajo en la pantalla.
 2. Busca el movimiento (puedes usar el buscador o filtrar por *Metro/Bus*, *Apps/Taxi*, *Efectivo*, etc.).
 3. Toca el botón del **lápiz (Editar)** en el movimiento:
-   * Corrige el monto, el método de pago o la nota.
-   * La app recalculará tus saldos al instante.
+   * **Fecha del Gasto:** Puedes cambiar el día si registraste un gasto con retraso o si pertenecía a la reposición anterior.
+   * **Monto y Método:** Corrige el monto base o el bolsillo utilizado.
+   * **Categoría y Notas:** Ajusta el motivo del gasto o la foto de la factura.
+   * La app recalculará tus saldos y comisiones al instante.
 4. Si quieres borrarlo por completo, toca el botón de la **basura (Eliminar)** y confirma.
 
 ---
 
-## 9. Generar el Reporte PDF para Contabilidad
+## 9. Generar el Reporte PDF para Contabilidad y Ciclos de Caja Chica
 
-Cuando te toque rendir cuentas a tu jefe o al departamento contable:
+Cuando te toque rendir cuentas a tu jefe o al departamento contable, recuerda que **la caja chica no siempre coincide con meses de calendario cerrado** (por ejemplo, si te dieron los $200 el 11 de septiembre y a inicios de octubre aún te quedan $24 de esa misma base):
 
 1. Toca el botón **`[ 📄 Reportes ]`** arriba a la derecha.
-2. Ingresa tus datos:
-   * **Nombre del Responsable:** (ej. *Isaac Alarcón*).
-   * **Periodo:** (ej. *Septiembre 2026*).
-3. Toca **`[ 📄 Descargar Reporte PDF ]`**:
-   * Se descargará un documento formal con formato empresarial limpio.
+2. Selecciona la modalidad de reporte que necesitas:
+   * **📅 Mes Calendario:** Filtra un mes exacto (ej. *Septiembre 2026* o *Historial Completo*).
+   * **🔄 Ciclo / Rango Fechas:** Ideal para liquidar una reposición específica. Te permite definir:
+     * **Fecha Desde:** (ej. *2026-09-11*, día en que te dieron la base).
+     * **Fecha Hasta:** (ej. *2026-10-06*, día en que se rinde cuentas).
+     * **Nombre del Ciclo (Opcional):** Puedes ponerle un título como *"Caja Chica Sep 11 - Oct 06"* o *"Caja Chica Septiembre - Octubre"*.
+3. Verifica el **Responsable de Caja** (ej. *Isaac Alarcón*).
+4. Toca **`[ 📄 Descargar Reporte PDF ]`**:
+   * Se descargará un documento formal con formato empresarial limpio y firmas de descargo.
+   * En el encabezado saldrá claramente el periodo o ciclo reportado.
    * Incluye la fecha de cada gasto, concepto, método de pago, desglose de tarifa base, IVA digital y comisión SPI.
    * Incluye las fotos de las facturas adjuntas en la última hoja.
-4. También puedes pulsar **`[ 📊 Exportar a Excel ]`** si en tu oficina prefieren el formato de hoja de cálculo.
+5. También puedes pulsar **`[ 📊 Exportar a Excel ]`** si en tu oficina prefieren el formato de hoja de cálculo.
 
 ### ⚙️ Configurar Tarifas (Comisión SPI y Fondo Base)
 En la misma ventana de **Reportes**, encontrarás la sección **"Configuración de Tarifas y Caja"**:
