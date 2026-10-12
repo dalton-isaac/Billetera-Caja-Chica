@@ -15,7 +15,7 @@ import {
   Save,
 } from 'lucide-react';
 import type { Movimiento, SaldosBolsillos } from '../types';
-import { calcularSaldosBolsillos } from '../utils/accounting';
+import { calcularSaldosBolsillos, ordenarMovimientosCronologico } from '../utils/accounting';
 import { generarReportePDF } from '../utils/pdfGenerator';
 import { generarReporteExcel } from '../utils/excelGenerator';
 import { exportarBackupJSON, importarBackupJSON } from '../utils/backupRestore';
@@ -131,7 +131,7 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   const mesesDisponibles = Array.from(mesesSet).sort().reverse();
 
   // Filtrar movimientos según mes o rango seleccionado
-  const movimientosFiltrados =
+  const movimientosSinOrdenar =
     tipoFiltro === 'MES'
       ? selectedMonth === 'TODOS'
         ? movimientos
@@ -142,6 +142,8 @@ export const ReportsModal: FC<ReportsModalProps> = ({
           if (fechaHasta && mDate > fechaHasta) return false;
           return true;
         });
+
+  const movimientosFiltrados = ordenarMovimientosCronologico(movimientosSinOrdenar);
 
   // Recalcular saldos para el período seleccionado
   const saldosReporte = calcularSaldosBolsillos(

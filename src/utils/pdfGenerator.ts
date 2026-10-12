@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Movimiento, SaldosBolsillos } from '../types';
+import { ordenarMovimientosCronologico } from './accounting';
 
 /**
  * Genera el documento formal de rendición de cuentas de caja chica en formato PDF.
@@ -28,6 +29,9 @@ export function generarReportePDF(
     day: 'numeric',
   });
 
+  // Ordenar movimientos estrictamente por fecha cronológica (antiguo -> reciente)
+  const movimientosOrdenados = ordenarMovimientosCronologico(movimientos);
+
   // 1. Cabecera Corporativa
   doc.setFillColor(15, 23, 42); // slate-900
   doc.rect(0, 0, 210, 24, 'F');
@@ -54,7 +58,7 @@ export function generarReportePDF(
   doc.text(`Responsable de Movilización: ${responsable}`, 14, 41);
 
   // 3. Bloque KPI Resumen
-  const totalReembolsos = movimientos
+  const totalReembolsos = movimientosOrdenados
     .filter((m) => m.tipo === 'AUTO_REEMBOLSO')
     .reduce((acc, curr) => acc + curr.montoBase, 0);
 
@@ -105,7 +109,7 @@ export function generarReportePDF(
   doc.setTextColor(15, 23, 42);
   doc.text('DETALLE INDIVIDUAL DE MOVIMIENTOS Y GASTOS', 14, startYTabla - 2);
 
-  const tableRows = movimientos.map((m) => {
+  const tableRows = movimientosOrdenados.map((m) => {
     let fechaFormateada = m.fechaHora;
     try {
       const d = new Date(m.fechaHora);

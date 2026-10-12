@@ -3,6 +3,7 @@ import {
   calcularDesgloseGasto,
   calcularSaldosBolsillos,
   calcularDiagnosticoArqueo,
+  ordenarMovimientosCronologico,
   CONFIG_DEFAULT,
   TARIFAS_TRANSPORTE,
 } from './accounting';
@@ -306,7 +307,7 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       expect(saldos.saldoProdubanco).toBe(189.80); // 200 - (10.00 + 0.20)
       expect(saldos.saldoPendienteReembolso).toBe(0.00); // 10 - 10 = 0
       expect(saldos.saldoEfectivo).toBe(0.00);
-      expect(saldos.totalGastosMes).toBe(10.00); // El gasto fue $10.00
+      expect(saldos.totalGastosMes).toBe(10.20); // El gasto operacional fue $10.00 + $0.20 de comisión bancaria SPI
     });
 
     it('debe calcular correctamente un mes completo con operaciones combinadas', () => {
@@ -514,4 +515,88 @@ describe('Motor Contable y Reglas de Negocio de Ecuador', () => {
       expect(diag82.pistas).toContain('Posible comisión SPI de Produbanco no anotada ($0.41)');
     });
   });
+
+  describe('ordenarMovimientosCronologico', () => {
+    it('debe ordenar movimientos de la fecha más antigua a la más reciente', () => {
+      const desordenados: Movimiento[] = [
+        {
+          id: 'mov-oct-7',
+          fechaHora: '2026-10-07T10:00:00-05:00',
+          tipo: 'GASTO',
+          categoria: 'ALIMENTACION',
+          metodoPago: 'EFECTIVO_CAJA',
+          montoBase: 0.75,
+          comisionBancaria: 0,
+          impuestoDigitalIVA: 0,
+          montoTotalDebitado: 0.75,
+          estadoReembolso: 'NO_APLICA',
+        },
+        {
+          id: 'mov-sep-15',
+          fechaHora: '2026-09-15T08:00:00-05:00',
+          tipo: 'GASTO',
+          categoria: 'BUS_URBANO',
+          metodoPago: 'EFECTIVO_CAJA',
+          montoBase: 0.35,
+          comisionBancaria: 0,
+          impuestoDigitalIVA: 0,
+          montoTotalDebitado: 0.35,
+          estadoReembolso: 'NO_APLICA',
+        },
+        {
+          id: 'mov-sep-23',
+          fechaHora: '2026-09-23T14:00:00-05:00',
+          tipo: 'GASTO',
+          categoria: 'METRO',
+          metodoPago: 'EFECTIVO_CAJA',
+          montoBase: 0.45,
+          comisionBancaria: 0,
+          impuestoDigitalIVA: 0,
+          montoTotalDebitado: 0.45,
+          estadoReembolso: 'NO_APLICA',
+        },
+      ];
+
+      const ordenados = ordenarMovimientosCronologico(desordenados);
+
+      expect(ordenados[0].id).toBe('mov-sep-15');
+      expect(ordenados[1].id).toBe('mov-sep-23');
+      expect(ordenados[2].id).toBe('mov-oct-7');
+    });
+
+    it('no debe mutar el arreglo original', () => {
+      const original: Movimiento[] = [
+        {
+          id: 'b',
+          fechaHora: '2026-10-02T10:00:00-05:00',
+          tipo: 'GASTO',
+          categoria: 'METRO',
+          metodoPago: 'EFECTIVO_CAJA',
+          montoBase: 0.45,
+          comisionBancaria: 0,
+          impuestoDigitalIVA: 0,
+          montoTotalDebitado: 0.45,
+          estadoReembolso: 'NO_APLICA',
+        },
+        {
+          id: 'a',
+          fechaHora: '2026-10-01T10:00:00-05:00',
+          tipo: 'GASTO',
+          categoria: 'METRO',
+          metodoPago: 'EFECTIVO_CAJA',
+          montoBase: 0.45,
+          comisionBancaria: 0,
+          impuestoDigitalIVA: 0,
+          montoTotalDebitado: 0.45,
+          estadoReembolso: 'NO_APLICA',
+        },
+      ];
+
+      const resultado = ordenarMovimientosCronologico(original);
+      expect(resultado).not.toBe(original);
+      expect(original[0].id).toBe('b');
+      expect(resultado[0].id).toBe('a');
+    });
+  });
 });
+

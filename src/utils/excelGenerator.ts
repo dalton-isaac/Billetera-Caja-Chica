@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { Movimiento, SaldosBolsillos } from '../types';
+import { ordenarMovimientosCronologico } from './accounting';
 
 /**
  * Genera y descarga un archivo Excel (.xlsx) estructurado con dos hojas:
@@ -14,8 +15,11 @@ export function generarReporteExcel(
 ): XLSX.WorkBook {
   const wb = XLSX.utils.book_new();
 
+  // Ordenar movimientos cronológicamente (antiguo -> reciente)
+  const movimientosOrdenados = ordenarMovimientosCronologico(movimientos);
+
   // 1. Hoja de Movimientos
-  const rowsMovimientos = movimientos.map((m) => {
+  const rowsMovimientos = movimientosOrdenados.map((m) => {
     const fecha = m.fechaHora.includes('T') ? m.fechaHora.split('T')[0] : m.fechaHora;
     const hora = m.fechaHora.includes('T')
       ? m.fechaHora.split('T')[1]?.substring(0, 5) || ''

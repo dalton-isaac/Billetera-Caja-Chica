@@ -121,6 +121,7 @@ export function calcularSaldosBolsillos(
       const debitoReembolso = m.montoTotalDebitado > 0 ? m.montoTotalDebitado : (m.montoBase + comision);
       saldoProdubanco -= debitoReembolso;
       saldoPendienteReembolso -= m.montoBase;
+      totalGastosMes += comision;
       continue;
     }
 
@@ -210,4 +211,21 @@ export function calcularDiagnosticoArqueo(
     diffEfectivo,
     pistas,
   };
+}
+
+/**
+ * Ordena movimientos cronológicamente (de la fecha más antigua a la más reciente).
+ * Si las fechas son idénticas, mantiene orden determinista por ID.
+ */
+export function ordenarMovimientosCronologico(movimientos: Movimiento[]): Movimiento[] {
+  return [...movimientos].sort((a, b) => {
+    const timeA = new Date(a.fechaHora).getTime();
+    const timeB = new Date(b.fechaHora).getTime();
+    if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+      return timeA - timeB;
+    }
+    const cmp = (a.fechaHora || '').localeCompare(b.fechaHora || '');
+    if (cmp !== 0) return cmp;
+    return (a.id || '').localeCompare(b.id || '');
+  });
 }
