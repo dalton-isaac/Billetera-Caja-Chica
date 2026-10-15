@@ -198,6 +198,18 @@ Cuando te toque rendir cuentas a tu jefe o al departamento contable, recuerda qu
    * Incluye las fotos de las facturas adjuntas en la última hoja.
 5. También puedes pulsar **`[ 📊 Exportar a Excel ]`** si en tu oficina prefieren el formato de hoja de cálculo.
 
+### 🔄 Cerrar Ciclo y Reiniciar a $200 para el Nuevo Mes
+Una vez que ya descargaste tu reporte PDF de septiembre y la empresa te repone la caja para el nuevo periodo:
+1. En la misma ventana de **Reportes**, pulsa el botón **`[ 🔄 Cerrar Ciclo y Reiniciar a $200 ]`**.
+2. Aparecerá una confirmación de seguridad. Toca **`[ Sí, Cerrar Ciclo y Reiniciar ]`**.
+3. **¿Qué sucede con tus saldos?**
+   * Tu saldo de **Produbanco** vuelve a **$200.00**.
+   * Tu **Efectivo en Mano** vuelve a **$0.00**.
+   * Tus **Gastos acumulados del ciclo** vuelven a **$0.00**.
+4. **¿Dónde quedan los gastos anteriores?**
+   * **En tu teléfono:** Tu reporte PDF y Excel ya quedaron descargados físicamente en tu celular.
+   * **En la aplicación:** Los gastos anteriores no se borran; quedan guardados como **Archivados**. En la sección de abajo (*Historial de Movimientos*) verás la pestaña **`[ 📦 Archivados ]`** donde podrás consultarlos cuando quieras sin que te ocupen memoria del teléfono (ocupan menos de 1 MB).
+
 ### ⚙️ Configurar Tarifas (Comisión SPI y Fondo Base)
 En la misma ventana de **Reportes**, encontrarás la sección **"Configuración de Tarifas y Caja"**:
 * Puedes consultar o cambiar la **Comisión SPI** (actualmente fijada en **$0.41**) o tu **Fondo Base Mensual** (por defecto **$200.00**).

@@ -13,6 +13,7 @@ import {
   Loader2,
   Settings,
   Save,
+  RotateCcw,
 } from 'lucide-react';
 import type { Movimiento, SaldosBolsillos } from '../types';
 import { calcularSaldosBolsillos, ordenarMovimientosCronologico } from '../utils/accounting';
@@ -28,6 +29,7 @@ export interface ReportsModalProps {
   movimientos: Movimiento[];
   saldos: SaldosBolsillos;
   onBackupRestored?: () => void;
+  onCerrarCiclo?: () => Promise<void> | void;
 }
 
 function getNombreMes(mesAnio: string): string {
@@ -51,6 +53,7 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   movimientos,
   saldos,
   onBackupRestored,
+  onCerrarCiclo,
 }) => {
   const currentMonth = new Date().toISOString().slice(0, 7);
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -74,6 +77,7 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   const [costoSpiInput, setCostoSpiInput] = useState<string>('0.41');
   const [baseMensualInput, setBaseMensualInput] = useState<string>('200.00');
   const [isSavingConfig, setIsSavingConfig] = useState<boolean>(false);
+  const [isConfirmingCerrarCiclo, setIsConfirmingCerrarCiclo] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const monthSelectId = useId();
@@ -83,12 +87,17 @@ export const ReportsModal: FC<ReportsModalProps> = ({
   const tituloRangoId = useId();
 
   useEffect(() => {
+    let isMounted = true;
     if (isOpen) {
       obtenerConfiguracion().then((cfg) => {
+        if (!isMounted) return;
         setCostoSpiInput(cfg.costoTransferenciaSPI.toFixed(2));
         setBaseMensualInput(cfg.baseMensual.toFixed(2));
       });
     }
+    return () => {
+      isMounted = false;
+    };
   }, [isOpen]);
 
   const handleGuardarConfig = async () => {
@@ -375,6 +384,70 @@ export const ReportsModal: FC<ReportsModalProps> = ({
           </div>
         )}
 
+        {/* Modal de Confirmación de Cierre de Ciclo */}
+        {isConfirmingCerrarCiclo && (
+          <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex flex-col gap-3">
+            <div className="flex items-start gap-2.5 text-cyan-300">
+              <AlertTriangle className="w-5 h-5 flex-shrink-0 text-cyan-400 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">
+                  ¿Cerrar Ciclo y Reiniciar a $200?
+                </h4>
+                <p className="text-[11px] text-cyan-200/90 mt-1 leading-relaxed">
+                  Tus gastos actuales se guardarán en el historial archivado y tu saldo volverá a arrancar en <strong>$200.00</strong> limpios con <strong>$0.00</strong> de gastos acumulados para el nuevo periodo.
+                </p>
+                <p className="text-[10px] text-amber-300 font-medium mt-1">
+                  ⚠️ Asegúrate de haber descargado tu reporte PDF o Excel antes de continuar.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsConfirmingCerrarCiclo(false)}
+                disabled={isProcessing}
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold rounded-xl"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setIsProcessing(true);
+                    await onCerrarCiclo?.();
+                    setIsConfirmingCerrarCiclo(false);
+                    vibrarExito();
+                    setStatusMessage({
+                      tipo: 'success',
+                      texto: '🎉 ¡Ciclo cerrado con éxito! Tu saldo se reinició a $200.00 para tu nuevo periodo.',
+                    });
+                  } catch (err) {
+                    console.error('Error cerrando ciclo:', err);
+                    setStatusMessage({
+                      tipo: 'error',
+                      texto: '❌ Error al cerrar el ciclo.',
+                    });
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+                disabled={isProcessing}
+                className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Cerrando...</span>
+                  </>
+                ) : (
+                  <span>Sí, Cerrar Ciclo y Reiniciar</span>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Selector de Parámetros de Reporte */}
         <div className="bg-slate-850 border border-slate-750/80 rounded-2xl p-3.5 flex flex-col gap-3">
           <div className="flex items-center justify-between text-xs font-bold text-slate-300">
@@ -589,6 +662,32 @@ export const ReportsModal: FC<ReportsModalProps> = ({
               </div>
             </button>
           </div>
+        </div>
+
+        {/* Sección: Cierre de Ciclo y Nuevo Periodo */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-slate-800">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">
+            Cierre de Periodo
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setIsConfirmingCerrarCiclo(true)}
+            disabled={isProcessing}
+            className="flex items-center gap-3 p-3 bg-gradient-to-r from-cyan-950/40 via-slate-850 to-slate-850 hover:from-cyan-900/40 border border-cyan-500/30 hover:border-cyan-500/50 rounded-2xl text-left transition-all active:scale-[0.98] group"
+          >
+            <div className="p-2 bg-cyan-500/20 text-cyan-400 rounded-xl group-hover:scale-105 transition-transform">
+              <RotateCcw className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-cyan-200">
+                Cerrar Ciclo y Reiniciar a $200
+              </p>
+              <p className="text-[10px] text-cyan-300/70 truncate">
+                Archiva los gastos del ciclo y arranca nuevo periodo en $200
+              </p>
+            </div>
+          </button>
         </div>
 
         {/* Sección: Configuración de Tarifas y Parámetros */}

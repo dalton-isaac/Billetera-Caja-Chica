@@ -166,10 +166,14 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
   onEliminarMovimiento,
 }) => {
   const [filtroActivo, setFiltroActivo] = useState<FiltroCategoria>('TODOS');
+  const [vistaCiclo, setVistaCiclo] = useState<'ACTIVO' | 'ARCHIVADOS'>('ACTIVO');
   const [busqueda, setBusqueda] = useState<string>('');
   const [movimientoAEliminar, setMovimientoAEliminar] = useState<Movimiento | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [fotoModalUrl, setFotoModalUrl] = useState<string | null>(null);
+
+  const countArchivados = useMemo(() => movimientos.filter((m) => m.archivado).length, [movimientos]);
+  const countActivos = useMemo(() => movimientos.filter((m) => !m.archivado).length, [movimientos]);
 
   // Orden cronológico: más reciente primero
   const movimientosOrdenados = useMemo(() => {
@@ -181,6 +185,10 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
   // Filtrado por categoría/método y texto de búsqueda
   const movimientosFiltrados = useMemo(() => {
     return movimientosOrdenados.filter((m) => {
+      // 0. Filtro por Ciclo Activo vs Archivados
+      if (vistaCiclo === 'ACTIVO' && m.archivado) return false;
+      if (vistaCiclo === 'ARCHIVADOS' && !m.archivado) return false;
+
       // 1. Filtro por pestaña
       let pasaFiltro = true;
       switch (filtroActivo) {
@@ -240,7 +248,7 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
 
       return true;
     });
-  }, [movimientosOrdenados, filtroActivo, busqueda]);
+  }, [movimientosOrdenados, filtroActivo, busqueda, vistaCiclo]);
 
   const handleConfirmarEliminar = async () => {
     if (!movimientoAEliminar) return;
@@ -266,6 +274,38 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
             Historial de Movimientos ({movimientosFiltrados.length})
           </h2>
         </div>
+        {countArchivados > 0 && (
+          <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded-xl border border-slate-800 text-[10px]">
+            <button
+              type="button"
+              onClick={() => {
+                vibrarExito();
+                setVistaCiclo('ACTIVO');
+              }}
+              className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                vistaCiclo === 'ACTIVO'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Ciclo Activo ({countActivos})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                vibrarExito();
+                setVistaCiclo('ARCHIVADOS');
+              }}
+              className={`px-2 py-0.5 rounded-lg font-bold transition-all ${
+                vistaCiclo === 'ARCHIVADOS'
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Archivados ({countArchivados})
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Buscador de texto */}
@@ -352,8 +392,15 @@ export const TransactionHistory: FC<TransactionHistoryProps> = ({
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs sm:text-sm font-bold text-white truncate">
-                        {nombre}
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-xs sm:text-sm font-bold text-white truncate">
+                          {nombre}
+                        </span>
+                        {m.archivado && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700 font-semibold">
+                            Archivado
+                          </span>
+                        )}
                       </div>
                       <div className="text-[11px] text-slate-400">
                         {formatearFechaHora(m.fechaHora)}

@@ -10,6 +10,7 @@ import {
   obtenerMovimientosMes,
   registrarArqueo,
   obtenerHistorialArqueos,
+  archivarCicloActual,
   limpiarBaseDatosParaPruebas,
 } from './db';
 import { CONFIG_DEFAULT } from '../utils/accounting';
@@ -288,6 +289,42 @@ describe('Capa de Persistencia Local Offline con Dexie.js (IndexedDB)', () => {
 
       const historial = await obtenerHistorialArqueos();
       expect(historial.map((a) => a.id)).toEqual(['arq-2', 'arq-1']);
+    });
+  });
+
+  describe('archivarCicloActual', () => {
+    it('debe marcar todos los movimientos no archivados como archivados', async () => {
+      const m1 = await registrarMovimiento({
+        tipo: 'GASTO',
+        metodoPago: 'DEBITO_PRODUBANCO',
+        montoBase: 10,
+        comisionBancaria: 0,
+        impuestoDigitalIVA: 0,
+        montoTotalDebitado: 10,
+        estadoReembolso: 'NO_APLICA',
+      });
+      const m2 = await registrarMovimiento({
+        tipo: 'GASTO',
+        metodoPago: 'EFECTIVO_CAJA',
+        montoBase: 5,
+        comisionBancaria: 0,
+        impuestoDigitalIVA: 0,
+        montoTotalDebitado: 5,
+        estadoReembolso: 'NO_APLICA',
+      });
+
+      const count = await archivarCicloActual();
+      expect(count).toBe(2);
+
+      const m1Actualizado = await db.movimientos.get(m1.id);
+      const m2Actualizado = await db.movimientos.get(m2.id);
+
+      expect(m1Actualizado?.archivado).toBe(true);
+      expect(m2Actualizado?.archivado).toBe(true);
+
+      // Si llamamos otra vez, no debe haber activos
+      const count2 = await archivarCicloActual();
+      expect(count2).toBe(0);
     });
   });
 

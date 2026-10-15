@@ -9,7 +9,7 @@ import type {
   SubcategoriaOtro,
   TipoMovimiento,
 } from './types';
-import { db, obtenerConfiguracion, registrarMovimiento, registrarArqueo, eliminarMovimiento } from './db/db';
+import { db, obtenerConfiguracion, registrarMovimiento, registrarArqueo, eliminarMovimiento, archivarCicloActual } from './db/db';
 import { calcularDesgloseGasto, calcularSaldosBolsillos, CONFIG_DEFAULT } from './utils/accounting';
 import { BalanceCards } from './components/BalanceCards';
 import { PaymentSelector } from './components/PaymentSelector';
@@ -39,8 +39,11 @@ export default function App() {
     obtenerConfiguracion();
   }, []);
 
-  // Cálculo en tiempo real de saldos de los 3 bolsillos
-  const saldos = calcularSaldosBolsillos(movimientos, config.baseMensual);
+  // Movimientos activos del ciclo actual (no archivados)
+  const movimientosActivos = movimientos.filter((m) => !m.archivado);
+
+  // Cálculo en tiempo real de saldos de los 3 bolsillos para el ciclo activo
+  const saldos = calcularSaldosBolsillos(movimientosActivos, config.baseMensual);
 
   useEffect(() => {
     if (toastMessage) {
@@ -188,6 +191,18 @@ export default function App() {
     }
   };
 
+  const handleCerrarCiclo = async () => {
+    try {
+      const archivados = await archivarCicloActual();
+      vibrarExito();
+      setToastMessage(`🔄 Ciclo cerrado: ${archivados} movimientos archivados. Base reiniciada a $${config.baseMensual.toFixed(2)}.`);
+    } catch (error) {
+      console.error('Error cerrando ciclo:', error);
+      setToastMessage('❌ Error al cerrar el ciclo');
+      throw error;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-925 text-slate-100 flex flex-col items-center p-3 sm:p-5">
       {/* Toast Feedback Notification */}
@@ -306,6 +321,7 @@ export default function App() {
         movimientos={movimientos}
         saldos={saldos}
         onBackupRestored={() => setToastMessage('💾 Respaldo restaurado con éxito')}
+        onCerrarCiclo={handleCerrarCiclo}
       />
     </div>
   );

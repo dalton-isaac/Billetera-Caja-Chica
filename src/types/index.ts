@@ -50,6 +50,7 @@ export interface Movimiento {
   estadoReembolso: EstadoReembolso;
   nota?: string;
   comprobanteUrl?: string;
+  archivado?: boolean;
 }
 
 export interface ConfiguracionSistema {

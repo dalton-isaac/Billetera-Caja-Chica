@@ -240,4 +240,32 @@ describe('ReportsModal', () => {
     expect(excelCallArgs[0][0].id).toBe('mov-1');
     expect(excelCallArgs[2]).toBe('Caja Chica Sep - Oct');
   });
+
+  it('shows confirmation and calls onCerrarCiclo when clicking Cerrar Ciclo y Reiniciar', async () => {
+    const onCerrarCiclo = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ReportsModal
+        isOpen={true}
+        onClose={vi.fn()}
+        movimientos={mockMovimientos}
+        saldos={mockSaldos}
+        onCerrarCiclo={onCerrarCiclo}
+      />,
+    );
+
+    const cerrarCicloBtn = screen.getByRole('button', { name: /Cerrar Ciclo y Reiniciar a \$200/i });
+    fireEvent.click(cerrarCicloBtn);
+
+    // Confirmation card appears
+    expect(screen.getByText('¿Cerrar Ciclo y Reiniciar a $200?')).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole('button', { name: /Sí, Cerrar Ciclo y Reiniciar/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(onCerrarCiclo).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/¡Ciclo cerrado con éxito!/i)).toBeInTheDocument();
+    });
+  });
 });

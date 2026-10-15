@@ -308,4 +308,43 @@ describe('TransactionHistory', () => {
     fireEvent.click(closeBtn);
     expect(screen.queryByText('Foto de Recibo / Factura')).not.toBeInTheDocument();
   });
+
+  it('filters between active cycle and archived movements when toggle is present', () => {
+    const movimientosConArchivado: Movimiento[] = [
+      {
+        ...mockMovimientos[0],
+        id: 'activo-1',
+        nota: 'Gasto de Octubre Activo',
+        archivado: false,
+      },
+      {
+        ...mockMovimientos[1],
+        id: 'archivado-1',
+        nota: 'Gasto de Septiembre Archivado',
+        archivado: true,
+      },
+    ];
+
+    render(
+      <TransactionHistory
+        movimientos={movimientosConArchivado}
+        onEditarMovimiento={vi.fn()}
+        onEliminarMovimiento={vi.fn()}
+      />
+    );
+
+    // Default view is active cycle
+    expect(screen.getByText('Ciclo Activo (1)')).toBeInTheDocument();
+    expect(screen.getByText('Archivados (1)')).toBeInTheDocument();
+    expect(screen.getByText('"Gasto de Octubre Activo"')).toBeInTheDocument();
+    expect(screen.queryByText('"Gasto de Septiembre Archivado"')).not.toBeInTheDocument();
+
+    // Switch to archived
+    const archivadosBtn = screen.getByRole('button', { name: /Archivados \(1\)/i });
+    fireEvent.click(archivadosBtn);
+
+    expect(screen.queryByText('"Gasto de Octubre Activo"')).not.toBeInTheDocument();
+    expect(screen.getByText('"Gasto de Septiembre Archivado"')).toBeInTheDocument();
+    expect(screen.getByText('Archivado')).toBeInTheDocument();
+  });
 });

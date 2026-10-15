@@ -105,6 +105,23 @@ export async function eliminarMovimiento(id: string): Promise<void> {
 }
 
 /**
+ * Marca todos los movimientos activos actuales como archivados.
+ * Devuelve el número de movimientos archivados.
+ */
+export async function archivarCicloActual(): Promise<number> {
+  const activos = await db.movimientos.filter((m) => !m.archivado).toArray();
+  if (activos.length === 0) return 0;
+
+  await db.transaction('rw', db.movimientos, async () => {
+    for (const mov of activos) {
+      await db.movimientos.update(mov.id, { archivado: true });
+    }
+  });
+
+  return activos.length;
+}
+
+/**
  * Obtiene los movimientos contables ordenados descendentemente por fechaHora.
  * Permite filtrar por mes y año en formato 'YYYY-MM'.
  */
